@@ -199,7 +199,7 @@ function LandingPage({ onOpenAuth }) {
 
   const eventTypes = [
     { emoji:"💍", title:"חתונות", desc:"מהתארסתם? מזל טוב! ניהול החתונה בקלות.", img:"https://images.unsplash.com/photo-1519741497674-611481863552?w=400&q=80" },
-    { emoji:"✡", title:"בר/ת מצווה", desc:"גיל המצוות הגיע. תכנון נכון ביחד עם ההורים.", img:"https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&q=80" },
+    { emoji:"✡️", title:"בר/ת מצווה", desc:"גיל המצוות הגיע. תכנון נכון ביחד עם ההורים.", img:"https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&q=80" },
     { emoji:"👶", title:"בריתות", desc:"הבייבי נולד? ארגון אירוע אפילו בטווח קצר.", img:"https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=400&q=80" },
     { emoji:"💼", title:"אירועים עסקיים", desc:"מערכת מתקדמת לניהול אירוע עסקי מכל גודל.", img:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&q=80" },
   ];
@@ -303,7 +303,7 @@ function LandingPage({ onOpenAuth }) {
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:20}}>
             {[["🪑","סידורי הושבה","כלי דיגיטלי ומהיר לסידורי שולחנות וניהול האורחים כולל עדכוני הגעה בזמן אמת."],["✅","אישורי הגעה","קליק אחד והאורחים מאשרים הגעה בכל מקום ובכל זמן. SMS ווואטסאפ."],["🖨️","פתק הושבה","חפש שם אורח — קבל פתק מיידי עם מספר שולחן. כמו קיוסק מקצועי."],["📊","ייבוא מאנשי קשר","באמצעות האפליקציה ניתן להעלות אורחים ישירות מאנשי הקשר בנייד."],["🤖","AI חכם","תאר מי לא יושב עם מי — ה-AI יסדר הכל תוך שניות."],["📱","התראות בזמן אמת","קבל התראות כאשר אורח מאשר הגעה או מעדכן את מצב הגעתו."]].map(([icon,title,desc],i)=>(
-              <div key={title} className="fu" style={{opacity:0,transform:"translateY(22px)",transition:`opacity .6s ${i*.07}s,transform .6s ${i*.07}s`,background:C.surface,border:`1px solid ${C.border}`,borderRadius:20,padding:26}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-5px)";e.currentTarget.style.borderColor=C.blueL;}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.borderColor=C.border;}}>
+              <div key={title} className="fu" style={{opacity:0,transform:"translateY(22px)",transition:`opacity .6s ${i*.07}s,transform .6s ${i*.07}s`,background:C.surface,border:`1px solid ${C.border}`,borderRadius:20,padding:26,transition:"transform .2s,border-color .2s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-5px)";e.currentTarget.style.borderColor=C.blueL;}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.borderColor=C.border;}}>
                 <div style={{width:52,height:52,borderRadius:15,background:`linear-gradient(135deg,${C.blue},${C.blueL})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:23,marginBottom:16}}>{icon}</div>
                 <div style={{fontWeight:800,fontSize:16,color:C.text,marginBottom:7}}>{title}</div>
                 <div style={{fontSize:14,color:C.muted,lineHeight:1.7}}>{desc}</div>
@@ -499,7 +499,7 @@ function EventPicker({ user, onSelect, onLogout, onBackToLanding }) {
     if(!error)onSelect(data);
     setCreating(false);
   };
-  const eventTypes=[["wedding","💍 חתונה"],["bar_mitzvah","✡ בר/ת מצווה"],["brit","👶 ברית"],["business","💼 עסקי"],["other","🎉 אחר"]];
+  const eventTypes=[["wedding","💍 חתונה"],["bar_mitzvah","✡️ בר/ת מצווה"],["brit","👶 ברית"],["business","💼 עסקי"],["other","🎉 אחר"]];
 
   return(<div dir="rtl" style={{minHeight:"100vh",background:C.bg,fontFamily:"'Heebo',sans-serif",paddingBottom:40}}>
     <div style={{background:`linear-gradient(145deg,${C.blue},${C.blueM})`,padding:"32px 20px 28px",position:"relative",overflow:"hidden"}}>
@@ -604,7 +604,7 @@ function EventPicker({ user, onSelect, onLogout, onBackToLanding }) {
           {/* סוג אירוע */}
           <div style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:8}}>סוג האירוע</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginBottom:14}}>
-            {[["wedding","💍 חתונה"],["bar_mitzvah","✡ בר/ת מצווה"],["brit","👶 ברית"],["business","💼 עסקי"],["other","🎉 אחר"]].map(([v,l])=>(
+            {[["wedding","💍 חתונה"],["bar_mitzvah","✡️ בר/ת מצווה"],["brit","👶 ברית"],["business","💼 עסקי"],["other","🎉 אחר"]].map(([v,l])=>(
               <button key={v} onClick={()=>setEditEvent(ev=>({...ev,event_type:v}))} style={{background:(editEvent.event_type||"wedding")===v?`linear-gradient(135deg,${C.blueM},${C.blueL})`:C.blueXL,color:(editEvent.event_type||"wedding")===v?"#fff":C.text,border:`2px solid ${(editEvent.event_type||"wedding")===v?"transparent":C.border}`,borderRadius:11,padding:"9px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{l}</button>
             ))}
           </div>
@@ -797,29 +797,8 @@ function SeatingApp({ user, event, onBack }) {
   const addGuest=async(data)=>{
     const name=(data?.name||newGuest).trim();if(!name)return;
     setSaving(true);
-    const phone=(data?.phone||"").trim();
-    const cleanPhone=phone.replace(/[^\d]/g,"");
-
-    // 🔍 בדיקת כפילויות — טלפון או שם זהה
-    const allGuests=[...guests,...tables.flatMap(t=>t.guests||[])];
-    const match=allGuests.find(g=>{
-      const gPhone=(g.phone||"").replace(/[^\d]/g,"");
-      if(cleanPhone&&gPhone&&cleanPhone===gPhone)return true;
-      if(g.name.trim().toLowerCase()===name.toLowerCase())return true;
-      return false;
-    });
-
-    if(match){
-      // עדכון אורח קיים
-      const updates={rsvp:data?.rsvp||match.rsvp,guest_count:data?.guest_count||match.guest_count,phone:cleanPhone||match.phone,name};
-      await sb.from("guests").update(updates).eq("id",match.id);
-      setGuests(gs=>[...gs.map(g=>g.id===match.id?{...g,...updates}:g)]);
-      setTables(ts=>[...ts.map(t=>({...t,guests:[...(t.guests||[]).map(g=>g.id===match.id?{...g,...updates}:g)]}))]);
-    }else{
-      // יצירת חדש
-      const{data:d}=await sb.from("guests").insert({name,phone:cleanPhone||null,rsvp:data?.rsvp||"pending",guest_count:data?.guest_count||1,event_id:event.id,table_id:null}).select().single();
-      if(d)setGuests(gs=>[...gs,d]);
-    }
+    const{data:d}=await sb.from("guests").insert({name,phone:data?.phone||null,rsvp:data?.rsvp||"pending",guest_count:data?.guest_count||1,event_id:event.id,table_id:null}).select().single();
+    if(d)setGuests(gs=>[...gs,d]);
     setNewGuest("");setSaving(false);
   };
   const editGuest=async(id,data)=>{
@@ -827,13 +806,6 @@ function SeatingApp({ user, event, onBack }) {
     await sb.from("guests").update({name:data.name,phone:data.phone||null,rsvp:data.rsvp,guest_count:data.guest_count}).eq("id",id);
     setGuests(gs=>gs.map(g=>g.id===id?{...g,...data}:g));
     setTables(ts=>ts.map(t=>({...t,guests:(t.guests||[]).map(g=>g.id===id?{...g,...data}:g)})));
-    setSaving(false);
-  };
-  const deleteGuest=async(id)=>{
-    setSaving(true);
-    await sb.from("guests").delete().eq("id",id);
-    setGuests(gs=>gs.filter(g=>g.id!==id));
-    setTables(ts=>ts.map(t=>({...t,guests:(t.guests||[]).filter(g=>g.id!==id)})));
     setSaving(false);
   };
   const addTable=async()=>{setModal("addTable");};
@@ -953,7 +925,6 @@ function SeatingApp({ user, event, onBack }) {
                     <div style={{fontSize:14,fontWeight:700,color:C.text}}>{g.name}</div>
                     {g.phone&&<div style={{fontSize:11,color:C.muted}}>{g.phone}</div>}
                   </div>
-                  <button onClick={()=>deleteGuest(g.id)} style={{background:"#FEF2F2",border:`1px solid ${C.danger}30`,color:C.danger,borderRadius:10,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:15,flexShrink:0}}>🗑</button>
                 </div>
                 {/* כפתורי RSVP */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
@@ -1019,7 +990,6 @@ function SeatingApp({ user, event, onBack }) {
           </div>
         )}
         {screen==="invite"&&<InviteSettings event={event} onUpdate={e=>setEvent(e)}/>}
-        {screen==="settings"&&(
           <div style={{padding:24,direction:"rtl",fontFamily:"'Heebo',sans-serif"}}>
             <Card style={{padding:16,marginBottom:14}}>
               <div style={{fontSize:12,color:C.muted,marginBottom:4}}>מחובר כ</div>
@@ -1172,25 +1142,7 @@ function InvitePage({ code }) {
     if(!firstName.trim()||!rsvp)return;
     setSubmitting(true);
     const fullName=`${firstName.trim()}${lastName.trim()?" "+lastName.trim():""}`;
-    const cleanPhone=phone.trim().replace(/[^\d]/g,"");
-
-    // 🔍 בדיקת כפילויות — חיפוש אורח קיים לפי טלפון או שם
-    const{data:existing}=await sb.from("guests").select("*").eq("event_id",event.id);
-    const match=(existing||[]).find(g=>{
-      const gPhone=(g.phone||"").replace(/[^\d]/g,"");
-      if(cleanPhone&&gPhone&&cleanPhone===gPhone)return true;
-      if(g.name.trim().toLowerCase()===fullName.toLowerCase())return true;
-      return false;
-    });
-
-    if(match){
-      // עדכון אורח קיים
-      await sb.from("guests").update({rsvp,guest_count:guestCount,phone:cleanPhone||match.phone,name:fullName}).eq("id",match.id);
-    }else{
-      // יצירת אורח חדש
-      await sb.from("guests").insert({name:fullName,phone:cleanPhone||null,rsvp,guest_count:guestCount,event_id:event.id,table_id:null});
-    }
-
+    await sb.from("guests").insert({name:fullName,phone:phone.trim()||null,rsvp,guest_count:guestCount,event_id:event.id,table_id:null});
     setSubmitted(true);setSubmitting(false);
   };
 
