@@ -1707,6 +1707,31 @@ export default function Root() {
 
   const path=window.location.pathname;
   const hash=window.location.hash;
+
+  // טיפול באימות מייל
+  const isAuthConfirm=path==="/auth/confirm"||hash.includes("type=email")||hash.includes("access_token");
+  if(isAuthConfirm){
+    sb.auth.getSession().then(({data})=>{
+      if(data.session){
+        window.location.href="/";
+      } else {
+        // נסה לאמת דרך ה-hash
+        const params=new URLSearchParams(hash.replace("#","").replace("?",""));
+        const tokenHash=params.get("token_hash");
+        const type=params.get("type");
+        if(tokenHash&&type){
+          sb.auth.verifyOtp({token_hash:tokenHash,type}).then(({data,error})=>{
+            if(!error)window.location.href="/";
+          });
+        }
+      }
+    });
+    return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:C.bg,flexDirection:"column",gap:14,fontFamily:"'Heebo',sans-serif",direction:"rtl"}}>
+      <Spinner size={40}/>
+      <p style={{color:C.muted,fontSize:15}}>מאמת את המייל שלך...</p>
+    </div>);
+  }
+
   const inviteMatch=path.match(/^\/invite\/([a-z0-9]+)$/i)||hash.match(/^#\/invite\/([a-z0-9]+)$/i);
   if(inviteMatch){
     return(<><style>{`@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;800;900&family=Syne:wght@700;800&display=swap'); *{box-sizing:border-box;margin:0;padding:0} @keyframes spin{to{transform:rotate(360deg)}} @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}} @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}`}</style><InvitePage code={inviteMatch[1]}/></>);
