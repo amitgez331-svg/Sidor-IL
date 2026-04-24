@@ -600,89 +600,33 @@ function LandingPage({ onOpenAuth, onLogout }) {
 
       {/* PRICING */}
       <section style={{padding:"88px 6vw",background:C.bg,textAlign:"center"}} id="pricing">
-        <div style={{maxWidth:1080,margin:"0 auto"}}>
-          <div className="fu" style={{opacity:0,transform:"translateY(22px)",transition:"opacity .6s,transform .6s",marginBottom:52}}>
-            <div style={{display:"inline-block",fontSize:12,fontWeight:700,color:C.blueL,background:C.blueXL,border:`1px solid rgba(74,122,255,.25)`,borderRadius:100,padding:"5px 16px",marginBottom:12}}>מחירים</div>
-            <h2 style={{fontFamily:"'Syne',sans-serif",fontSize:"clamp(26px,3.3vw,44px)",fontWeight:800,color:C.text,marginBottom:12}}>לכל החבילות והמחירים</h2>
-            <p style={{fontSize:16,color:C.muted}}>שקוף ופשוט — ללא הפתעות.</p>
+        <div style={{maxWidth:700,margin:"0 auto"}}>
+          <div className="fu" style={{opacity:0,transform:"translateY(22px)",transition:"opacity .6s,transform .6s",marginBottom:40}}>
+            <div style={{display:"inline-block",fontSize:12,fontWeight:700,color:C.blueL,background:C.blueXL,border:`1px solid rgba(74,122,255,.25)`,borderRadius:100,padding:"5px 16px",marginBottom:12}}>חבילות</div>
+            <h2 style={{fontFamily:"'Syne',sans-serif",fontSize:"clamp(26px,3.3vw,44px)",fontWeight:800,color:C.text,marginBottom:14}}>חבילה לכל צורך</h2>
+            <p style={{fontSize:16,color:C.muted,lineHeight:1.8,marginBottom:32}}>מסידורי הושבה בסיסיים ועד הפקה מלאה — יש לנו חבילה שמתאימה לכם. כל החבילות כוללות גישה למערכת הניהול המתקדמת שלנו.</p>
           </div>
-
-          {/* 4 חבילות */}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:20,maxWidth:1040,margin:"0 auto 40px"}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:16,marginBottom:40}}>
             {[
-              {
-                id:"basic",name:"בסיס + הושבה",price:"₪150",period:"החל מ",color:C.blue,bg:C.blueXL,
-                badge:null,
-                features:["שליחה ידנית בוואטסאפ","קבלת אישורי הגעה","סידורי הושבה מלאים","מפה אינטראקטיבית","פתק הושבה להדפסה"],
-              },
-              {
-                id:"sms",name:"הודעות SMS",price:"₪70",period:"החל מ",color:"#059669",bg:"#F0FFF6",
-                badge:"📱 SMS",
-                features:["הכל בחבילת בסיס","שליחת SMS לכל האורחים","תזמון הודעות אוטומטי","אישורי הגעה ב-SMS","תזכורות לפני האירוע"],
-              },
-              {
-                id:"whatsapp",name:"הודעות WhatsApp",price:"₪80",period:"החל מ",color:"#25D366",bg:"#F0FFF6",
-                badge:"💬 WhatsApp",featured:true,
-                features:["שליחה אוטומטית בוואטסאפ","תזכורת לפני האירוע","תודה לאחר האירוע","אישורי הגעה ללא הגבלה","מגיב אוטומטי לשאלות"],
-              },
-              {
-                id:"vip",name:"VIP הכל כלול",price:"₪250",period:"החל מ",color:"#B45309",bg:"#FFFBEB",
-                badge:"👑 VIP",
-                features:["הכל בחבילת WhatsApp","סבב שיחות טלפוני לאורחים","מספר שולחן ב-SMS ביום האירוע","סגנון הזמנה פרימיום","תמיכה ייעודית 24/7"],
-              },
-              {
-                id:"reception",name:"עמדת קבלת פנים",price:"₪1,300",period:"החל מ",color:"#7C3AED",bg:"#F5F3FF",
-                badge:"💎 פרימיום",
-                features:["עמדת קבלת פנים עם דיילים/ות","חלוקת פתקיות הושבה לאורחים","צמצום רזרבות במהלך ההושבה","ניהול תורים בכניסה","תיאום מלא עם צוות האולם"],
-              },
-              {
-                id:"production",name:"הפקת אירוע",price:"בהתאם",period:"לייעוץ חינם",color:"#DB2777",bg:"#FFF0F6",
-                badge:"✨ פרימיום",
-                features:["אטרקציות לאירוע","ניהול אלכוהול / בר אקטיבי","עיצובים לאירוע","אתם חולמים — אנחנו מגשימים","ייעוץ אישי ללא עלות"],
-              },
-            ].map((p,i)=>(
-              <div key={p.id} className="fu" onClick={()=>onOpenAuth("register")}
-                style={{opacity:0,transform:"translateY(22px)",transition:`opacity .6s ${i*.1}s,transform .6s ${i*.1}s`,
-                  border:`2px solid ${p.featured?p.color:C.border}`,borderRadius:22,padding:"28px 22px",textAlign:"right",
-                  background:p.featured?`linear-gradient(145deg,${C.blue},${C.blueM})`:C.surface,
-                  position:"relative",cursor:"pointer",
-                  boxShadow:p.featured?`0 8px 32px ${C.blueL}44`:"none"}}>
-                {p.badge&&<div style={{position:"absolute",top:-12,right:20,background:p.featured?C.gold:p.color,color:p.featured?C.text:"#fff",fontSize:11,fontWeight:800,padding:"3px 12px",borderRadius:100}}>{p.badge}</div>}
-                <div style={{fontSize:11,fontWeight:800,color:p.featured?"rgba(255,255,255,.6)":C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>{p.name}</div>
-                <div style={{fontSize:38,fontWeight:900,color:p.featured?"#fff":p.color,lineHeight:1,marginBottom:2}}>{p.price}</div>
-                <div style={{fontSize:12,color:p.featured?"rgba(255,255,255,.55)":C.muted,marginBottom:18}}>{p.period}</div>
-                <ul style={{listStyle:"none",display:"flex",flexDirection:"column",gap:8,marginBottom:20,textAlign:"right"}}>
-                  {p.features.map(f=>(<li key={f} style={{fontSize:13,display:"flex",alignItems:"center",gap:7,color:p.featured?"rgba(255,255,255,.88)":C.text}}>
-                    <span style={{color:p.featured?"#6EE7A7":p.color,fontWeight:900,flexShrink:0}}>✓</span>{f}
-                  </li>))}
-                </ul>
-                <div style={{width:"100%",padding:"11px",borderRadius:10,fontSize:14,fontWeight:700,textAlign:"center",
-                  background:p.featured?"rgba(255,255,255,.2)":p.color,
-                  color:"#fff",border:p.featured?"2px solid rgba(255,255,255,.3)":"none"}}>
-                  לרכישה מהירה ←
-                </div>
+              {icon:"🪑",title:"סידורי הושבה",desc:"ניהול מלא של שולחנות ואורחים"},
+              {icon:"💬",title:"הודעות WhatsApp",desc:"שליחה אוטומטית לכל האורחים"},
+              {icon:"📱",title:"הודעות SMS",desc:"תזמון הודעות חכם"},
+              {icon:"👑",title:"VIP",desc:"הכל כלול + שיחות טלפון"},
+              {icon:"💎",title:"עמדת קבלת פנים",desc:"דיילים וחלוקת פתקים"},
+              {icon:"✨",title:"הפקת אירוע",desc:"אטרקציות, בר ועיצובים"},
+            ].map((item,i)=>(
+              <div key={i} className="fu" style={{opacity:0,transform:"translateY(22px)",transition:`opacity .6s ${i*.08}s,transform .6s ${i*.08}s`,background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:"22px 16px",textAlign:"center"}}>
+                <div style={{fontSize:32,marginBottom:8}}>{item.icon}</div>
+                <div style={{fontSize:14,fontWeight:800,color:C.text,marginBottom:4}}>{item.title}</div>
+                <div style={{fontSize:12,color:C.muted}}>{item.desc}</div>
               </div>
             ))}
           </div>
-
-          {/* חבילות SMS */}
-          <div className="fu" style={{opacity:0,transform:"translateY(22px)",transition:"opacity .6s .2s,transform .6s .2s",background:C.surface,borderRadius:20,padding:"32px",border:`1px solid ${C.border}`,maxWidth:700,margin:"0 auto"}}>
-            <div style={{fontSize:14,fontWeight:800,color:C.text,marginBottom:4}}>📱 רכישת SMS בנפרד</div>
-            <div style={{fontSize:13,color:C.muted,marginBottom:20}}>ניתן לרכוש רשומות SMS בנוסף לכל חבילה</div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:12}}>
-              {[[150,"₪70"],[300,"₪90"],[500,"₪120"],[800,"₪170"],[1000,"₪200"],[2000,"₪330"]].map(([sms,price])=>(
-                <div key={sms} onClick={()=>onOpenAuth("register")} style={{border:`1.5px solid ${C.border}`,borderRadius:14,padding:"14px 8px",textAlign:"center",cursor:"pointer",background:C.bg}}
-                  onMouseEnter={e=>{e.currentTarget.style.borderColor=C.blueL;e.currentTarget.style.background=C.blueXL;}}
-                  onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.background=C.bg;}}>
-                  <div style={{fontSize:22,fontWeight:900,color:C.blue,lineHeight:1}}>{sms.toLocaleString()}</div>
-                  <div style={{fontSize:11,color:C.muted,marginBottom:8}}>הודעות SMS</div>
-                  <div style={{fontSize:16,fontWeight:800,color:C.text}}>{price}</div>
-                  <div style={{fontSize:11,color:C.blueL,fontWeight:700,marginTop:4}}>לרכישה ←</div>
-                </div>
-              ))}
-            </div>
-            <div style={{fontSize:11,color:C.muted,textAlign:"center"}}>רכישה מהירה ומאובטחת · Apple Pay · Google Pay · Bit · Visa · Mastercard</div>
-          </div>
+          <button onClick={()=>onOpenAuth("register")}
+            style={{background:`linear-gradient(135deg,${C.blue},${C.blueL})`,color:"#fff",border:"none",borderRadius:14,padding:"15px 40px",fontSize:16,fontWeight:800,cursor:"pointer",fontFamily:"inherit",boxShadow:`0 8px 28px rgba(74,122,255,.4)`}}>
+            התחברו לראות את כל החבילות
+          </button>
+          <div style={{fontSize:12,color:C.muted,marginTop:12}}>המחירים מפורטים בתוך המערכת לאחר הכניסה</div>
         </div>
       </section>
 
@@ -1206,8 +1150,8 @@ function SeatingApp({ user, event, onBack }) {
             {icon:"🪑➕",label:"הוסף שולחן",nav:"addTable"},
             {icon:"💰",label:"ניהול תקציב",nav:"budget"},
             {icon:"📦",label:"חבילות",nav:"packages",highlight3:true},
-            {icon:"📱",label:"הודעות SMS",nav:"sms",locked:!hasPkg("sms")},
-            {icon:"💬",label:"הודעות WhatsApp",nav:"whatsapp",locked:!hasPkg("whatsapp")},
+            {icon:"📱",label:"הודעות SMS",nav:"sms",locked:false},
+            {icon:"💬",label:"הודעות WhatsApp",nav:"whatsapp",locked:false},
             {icon:"⚙️",label:"הגדרות",nav:"settings"},
           ].map(item=>(
             <Card key={item.nav}
@@ -1971,10 +1915,12 @@ function SMSScreen({ event, guests }) {
 
             {/* כפתור */}
             <button
-              onClick={()=>!msg.locked&&setShowPicker(msg.id)}
-              disabled={msg.locked||balance===0}
-              style={{background:balance===0||msg.locked?"#374151":"#2D3748",color:"#fff",border:"none",borderRadius:20,padding:"10px 20px",fontSize:13,fontWeight:700,cursor:balance===0||msg.locked?"default":"pointer",fontFamily:"inherit",width:"80%",opacity:balance===0?.6:1}}>
-              {balance===0?"🔒 רכוש SMS":"בחר תזמון"}
+              onClick={()=>{
+                if(balance===0){setShowPicker("buy");}
+                else setShowPicker(msg.id);
+              }}
+              style={{background:"#4B5563",color:"#fff",border:"none",borderRadius:20,padding:"10px 20px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"80%"}}>
+              {balance===0?"רכוש SMS":"בחר תזמון"}
             </button>
           </div>
         ))}
@@ -1985,21 +1931,40 @@ function SMSScreen({ event, guests }) {
         <span style={{fontSize:14,color:C.muted,fontWeight:600}}>👁 0 צפיות בהזמנה</span>
       </div>
 
-      {/* Picker תאריך */}
+      {/* Picker תאריך / מודל רכישה */}
       {showPicker&&(
         <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setShowPicker(null)}>
           <div onClick={e=>e.stopPropagation()} style={{background:C.surface,borderRadius:"20px 20px 0 0",padding:"24px 20px 40px",width:"100%",maxWidth:480,direction:"rtl"}}>
             <div style={{width:40,height:4,borderRadius:2,background:C.border,margin:"0 auto 16px"}}/>
-            <div style={{fontSize:15,fontWeight:800,color:C.text,marginBottom:16}}>
-              {msgTypes.find(m=>m.id===showPicker)?.title} — בחר תאריך ושעה
-            </div>
-            <input type="datetime-local"
-              onChange={e=>{setSchedules(p=>({...p,[showPicker]:e.target.value}));setShowPicker(null);}}
-              style={{width:"100%",background:C.blueXL,border:`1.5px solid ${C.border}`,borderRadius:12,padding:"12px",fontSize:14,color:C.text,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:12}}/>
-            <button onClick={()=>setShowPicker(null)}
-              style={{width:"100%",background:"transparent",color:C.muted,border:`1px solid ${C.border}`,borderRadius:12,padding:"11px",fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>
-              ביטול
-            </button>
+            {showPicker==="buy"?(
+              <>
+                <div style={{fontSize:16,fontWeight:900,color:C.text,marginBottom:6,textAlign:"center"}}>📱 רכישת SMS</div>
+                <div style={{fontSize:13,color:C.muted,marginBottom:16,textAlign:"center"}}>בחר חבילת SMS כדי לתזמן שליחות</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
+                  {[[150,"₪70"],[300,"₪90"],[500,"₪120"],[800,"₪170"],[1000,"₪200"],[2000,"₪330"]].map(([sms,price])=>(
+                    <div key={sms} onClick={()=>alert(`בקרוב! רכישת ${sms} SMS ב-${price} דרך PayPlus`)}
+                      style={{border:`1.5px solid ${C.border}`,borderRadius:12,padding:"12px 6px",textAlign:"center",cursor:"pointer",background:C.bg}}
+                      onMouseEnter={e=>e.currentTarget.style.borderColor=C.blueL}
+                      onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
+                      <div style={{fontSize:18,fontWeight:900,color:C.blue}}>{sms.toLocaleString()}</div>
+                      <div style={{fontSize:10,color:C.muted,marginBottom:4}}>הודעות</div>
+                      <div style={{fontSize:14,fontWeight:800,color:C.text}}>{price}</div>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={()=>setShowPicker(null)} style={{width:"100%",background:"transparent",color:C.muted,border:`1px solid ${C.border}`,borderRadius:12,padding:"11px",fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>סגור</button>
+              </>
+            ):(
+              <>
+                <div style={{fontSize:15,fontWeight:800,color:C.text,marginBottom:16}}>
+                  {msgTypes.find(m=>m.id===showPicker)?.title} — בחר תאריך ושעה
+                </div>
+                <input type="datetime-local"
+                  onChange={e=>{setSchedules(p=>({...p,[showPicker]:e.target.value}));setShowPicker(null);}}
+                  style={{width:"100%",background:C.blueXL,border:`1.5px solid ${C.border}`,borderRadius:12,padding:"12px",fontSize:14,color:C.text,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:12}}/>
+                <button onClick={()=>setShowPicker(null)} style={{width:"100%",background:"transparent",color:C.muted,border:`1px solid ${C.border}`,borderRadius:12,padding:"11px",fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>ביטול</button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -2763,8 +2728,8 @@ export default function Root() {
 
   const selectEvent=(ev)=>{
     setEvent(ev);
-    if(ev)sessionStorage.setItem("currentEventId",ev.id);
-    else sessionStorage.removeItem("currentEventId");
+    if(ev)localStorage.setItem("sidor_event_id",ev.id);
+    else localStorage.removeItem("sidor_event_id");
   };
 
   // ← useEffect חייב להיות לפני כל return!
@@ -2773,17 +2738,17 @@ export default function Root() {
       const u=data.session?.user||null;
       setUser(u);
       if(u){
-        const savedId=sessionStorage.getItem("currentEventId");
+        const savedId=localStorage.getItem("sidor_event_id");
         if(savedId){
           const{data:ev}=await sb.from("events").select("*").eq("id",savedId).eq("user_id",u.id).single();
-          if(ev)setEvent(ev);
+          if(ev){setEvent(ev);}
         }
       }
       setChecking(false);
     });
     const{data:{subscription}}=sb.auth.onAuthStateChange((_,session)=>{
       if(!session?.user){
-        setUser(null);setEvent(null);sessionStorage.removeItem("currentEventId");
+        setUser(null);setEvent(null);localStorage.removeItem("sidor_event_id");
       } else {
         setUser(session.user);
       }
@@ -2791,7 +2756,7 @@ export default function Root() {
     return()=>subscription.unsubscribe();
   },[]);
 
-  const logout=async()=>{await sb.auth.signOut();setUser(null);setEvent(null);sessionStorage.removeItem("currentEventId");setShowLanding(false);};
+  const logout=async()=>{await sb.auth.signOut();setUser(null);setEvent(null);localStorage.removeItem("sidor_event_id");setShowLanding(false);};
 
   const path=window.location.pathname;
   const hash=window.location.hash;
