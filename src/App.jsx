@@ -1128,6 +1128,7 @@ function MobileSeating({ tables, guests, search, setSearch, newGuest, setNewGues
 // ─── SEATING APP ──────────────────────────────────────────────────────────────
 function SeatingApp({ user, event, onBack }) {
   const [tables,setTables]=useState([]),[guests,setGuests]=useState([]),[selected,setSelected]=useState(null),[view,setView]=useState("map"),[screen,setScreen]=useState("home"),[modal,setModal]=useState(null),[editGuestData,setEditGuestData]=useState(null),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[search,setSearch]=useState(""),[newGuest,setNewGuest]=useState(""),[mobile,setMobile]=useState(isMobile());
+  const [sidebarOpen,setSidebarOpen]=useState(true);
   const [userPackages,setUserPackages]=useState([]);
   const [trialExpired,setTrialExpired]=useState(false);
   const [trialHours,setTrialHours]=useState(24);
@@ -1456,8 +1457,6 @@ function SeatingApp({ user, event, onBack }) {
       {modal==="addTable"&&<AddTableModal onConfirm={doAddTable} onClose={()=>setModal(null)}/>}
     </div>);
   }
-
-  const [sidebarOpen,setSidebarOpen]=useState(true);
 
   const navItems=[
     {id:"home",icon:"🏠",label:"ראשי"},
