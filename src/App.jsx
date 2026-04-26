@@ -1460,6 +1460,7 @@ function SeatingApp({ user, event, onBack }) {
 
   const navItems=[
     {id:"home",icon:"🏠",label:"ראשי"},
+    {id:"settings",icon:"📋",label:"פרטי האירוע"},
     {id:"rsvp",icon:"✅",label:"אישורי הגעה"},
     {id:"seating",icon:"🪑",label:"סידורי הושבה"},
     {id:"invite",icon:"💌",label:"הזמנה דיגיטלית"},
@@ -1469,7 +1470,6 @@ function SeatingApp({ user, event, onBack }) {
     {id:"packages",icon:"📦",label:"חבילות"},
     {id:"sms",icon:"📱",label:"הודעות SMS"},
     {id:"whatsapp",icon:"💬",label:"WhatsApp"},
-    {id:"settings",icon:"📋",label:"פרטי האירוע"},
   ];
 
   return(<div dir="rtl" style={{fontFamily:"'Heebo',sans-serif",background:C.bg,color:C.text,height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
@@ -1494,11 +1494,11 @@ function SeatingApp({ user, event, onBack }) {
     <div style={{display:"flex",flex:1,overflow:"hidden"}}>
       {/* SIDEBAR */}
       {sidebarOpen&&(
-        <div style={{width:220,background:"#2D3748",display:"flex",flexDirection:"column",flexShrink:0,height:"100%",overflowY:"auto"}}>
-          <div style={{padding:"16px",borderBottom:"1px solid rgba(255,255,255,.08)",background:"rgba(255,255,255,.04)"}}>
-            <div style={{fontSize:11,color:"rgba(255,255,255,.4)",marginBottom:4}}>האירוע הנוכחי</div>
-            <div style={{fontSize:13,fontWeight:800,color:"#fff",lineHeight:1.3}}>{event.name}</div>
-            {event.date&&<div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:3}}>📅 {event.date}</div>}
+        <div style={{width:220,background:"#fff",display:"flex",flexDirection:"column",flexShrink:0,height:"100%",overflowY:"auto",borderLeft:"1px solid #E2E8F0",boxShadow:"2px 0 8px rgba(0,0,0,.04)"}}>
+          <div style={{padding:"16px",borderBottom:"1px solid #F0F0F0",background:"#FAFAFA"}}>
+            <div style={{fontSize:11,color:"#999",marginBottom:4}}>האירוע הנוכחי</div>
+            <div style={{fontSize:13,fontWeight:800,color:"#1A202C",lineHeight:1.3}}>{event.name}</div>
+            {event.date&&<div style={{fontSize:11,color:"#718096",marginTop:3}}>📅 {event.date}</div>}
           </div>
           <nav style={{flex:1,padding:"8px 0"}}>
             {navItems.map(item=>{
@@ -1512,12 +1512,12 @@ function SeatingApp({ user, event, onBack }) {
                     else setScreen(item.id);
                   }}
                   style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",cursor:"pointer",
-                    color:screen===item.id?"#fff":"rgba(255,255,255,.65)",
-                    background:screen===item.id?"rgba(229,62,62,.15)":"transparent",
+                    color:screen===item.id?"#E53E3E":"#4A5568",
+                    background:screen===item.id?"#FFF5F5":"transparent",
                     borderRight:`3px solid ${screen===item.id?"#E53E3E":"transparent"}`,
-                    fontSize:13,fontWeight:600,transition:"all .15s"}}
-                  onMouseEnter={e=>{if(screen!==item.id){e.currentTarget.style.background="rgba(255,255,255,.06)";e.currentTarget.style.color="#fff";}}}
-                  onMouseLeave={e=>{if(screen!==item.id){e.currentTarget.style.background="transparent";e.currentTarget.style.color="rgba(255,255,255,.65)";}}}
+                    fontSize:13,fontWeight:screen===item.id?700:500,transition:"all .15s"}}
+                  onMouseEnter={e=>{if(screen!==item.id){e.currentTarget.style.background="#F7FAFC";e.currentTarget.style.color="#1A202C";}}}
+                  onMouseLeave={e=>{if(screen!==item.id){e.currentTarget.style.background="transparent";e.currentTarget.style.color="#4A5568";}}}
                 >
                   <span style={{fontSize:15}}>{item.icon}</span>
                   <span style={{flex:1}}>{item.label}</span>
@@ -1526,10 +1526,10 @@ function SeatingApp({ user, event, onBack }) {
               );
             })}
           </nav>
-          <div style={{borderTop:"1px solid rgba(255,255,255,.08)",padding:"8px 0"}}>
+          <div style={{borderTop:"1px solid #F0F0F0",padding:"8px 0"}}>
             <div onClick={onBack}
-              style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",cursor:"pointer",color:"rgba(255,100,100,.8)",fontSize:13,fontWeight:600}}
-              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.06)"}
+              style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",cursor:"pointer",color:"#C53030",fontSize:13,fontWeight:600}}
+              onMouseEnter={e=>e.currentTarget.style.background="#FFF5F5"}
               onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
               <span>🚪</span><span>החלף אירוע</span>
             </div>
@@ -3384,6 +3384,149 @@ function InviteSettings({ event, onUpdate }) {
 // ─── ADMIN LOGIN ──────────────────────────────────────────────────────────────
 const ADMIN_PASSWORD="Rene1807";
 
+// ─── CREATE EVENT SCREEN ──────────────────────────────────────────────────────
+function CreateEventScreen({ user, onSelect, onLogout }) {
+  const [events,setEvents]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [creating,setCreating]=useState(false);
+  const [showForm,setShowForm]=useState(false);
+  const [form,setForm]=useState({name:"",date:"",event_type:"wedding",groom_name:"",bride_name:"",venue:"",venue_address:"",event_time:""});
+
+  useEffect(()=>{
+    sb.from("events").select("*").eq("user_id",user.id).order("created_at",{ascending:false})
+      .then(({data})=>{
+        const evs=data||[];
+        setEvents(evs);
+        // אם יש אירוע אחד — נכנס ישר
+        if(evs.length===1){onSelect(evs[0]);return;}
+        // אם אין אירועים — מציגים טופס יצירה
+        if(evs.length===0){setShowForm(true);}
+        setLoading(false);
+      });
+  },[]);
+
+  const create=async()=>{
+    if(!form.name.trim())return;
+    setCreating(true);
+    const invite_code=Math.random().toString(36).slice(2,10);
+    const{data,error}=await sb.from("events").insert({...form,name:form.name.trim(),user_id:user.id,invite_code,invite_active:true}).select().single();
+    if(!error&&data)onSelect(data);
+    setCreating(false);
+  };
+
+  if(loading)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:C.bg}}><Spinner size={40}/></div>);
+
+  // אם יש כמה אירועים — בחירה
+  if(events.length>1&&!showForm){
+    return(
+      <div dir="rtl" style={{minHeight:"100vh",background:C.bg,fontFamily:"'Heebo',sans-serif",display:"flex",flexDirection:"column"}}>
+        <div style={{background:`linear-gradient(135deg,${C.blue},${C.blueM})`,padding:"20px 24px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontSize:20,fontWeight:900,color:"#fff"}}>◈ Sidor-IL</div>
+          <div style={{display:"flex",gap:10}}>
+            <button onClick={()=>setShowForm(true)} style={{background:"rgba(255,255,255,.2)",border:"none",color:"#fff",borderRadius:10,padding:"7px 16px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>+ אירוע חדש</button>
+            <button onClick={onLogout} style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.2)",color:"rgba(255,255,255,.8)",borderRadius:10,padding:"7px 14px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>יציאה</button>
+          </div>
+        </div>
+        <div style={{padding:"32px 24px",maxWidth:600,margin:"0 auto",width:"100%"}}>
+          <div style={{fontSize:20,fontWeight:900,color:C.text,marginBottom:6}}>האירועים שלי</div>
+          <div style={{fontSize:13,color:C.muted,marginBottom:24}}>בחר אירוע להמשך ניהול</div>
+          {events.map(ev=>(
+            <div key={ev.id} onClick={()=>onSelect(ev)}
+              style={{background:"#fff",borderRadius:14,padding:"18px 20px",marginBottom:12,cursor:"pointer",border:`1.5px solid ${C.border}`,display:"flex",alignItems:"center",gap:14,boxShadow:"0 1px 6px rgba(0,0,0,.04)",transition:"all .15s"}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=C.blueL;e.currentTarget.style.transform="translateY(-2px)";}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.transform="none";}}>
+              <div style={{width:48,height:48,borderRadius:14,background:`linear-gradient(135deg,${C.blue}18,${C.blueL}18)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🎊</div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:800,fontSize:16,color:C.text}}>{ev.name}</div>
+                {ev.date&&<div style={{fontSize:12,color:C.muted,marginTop:2}}>📅 {new Date(ev.date).toLocaleDateString("he-IL",{day:"numeric",month:"long",year:"numeric"})}</div>}
+                {ev.venue&&<div style={{fontSize:12,color:C.muted}}>📍 {ev.venue}</div>}
+              </div>
+              <span style={{color:C.blueL,fontSize:20}}>←</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // טופס יצירת אירוע
+  return(
+    <div dir="rtl" style={{minHeight:"100vh",background:C.bg,fontFamily:"'Heebo',sans-serif",display:"flex",flexDirection:"column"}}>
+      <div style={{background:`linear-gradient(135deg,${C.blue},${C.blueM})`,padding:"20px 24px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div style={{fontSize:20,fontWeight:900,color:"#fff"}}>◈ Sidor-IL</div>
+        {events.length>0&&<button onClick={()=>setShowForm(false)} style={{background:"rgba(255,255,255,.15)",border:"none",color:"#fff",borderRadius:10,padding:"7px 14px",fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>← חזרה</button>}
+        <button onClick={onLogout} style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.2)",color:"rgba(255,255,255,.8)",borderRadius:10,padding:"7px 14px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>יציאה</button>
+      </div>
+      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+        <div style={{background:"#fff",borderRadius:20,padding:36,width:"100%",maxWidth:500,boxShadow:"0 4px 24px rgba(27,58,140,.1)"}}>
+          <div style={{textAlign:"center",marginBottom:28}}>
+            <div style={{fontSize:40,marginBottom:8}}>🎊</div>
+            <div style={{fontSize:22,fontWeight:900,color:C.text}}>צור אירוע חדש</div>
+            <div style={{fontSize:13,color:C.muted,marginTop:4}}>מלא את הפרטים הבסיסיים — ניתן לעדכן מאוחר יותר</div>
+          </div>
+
+          {/* סוג אירוע */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+            {[["wedding","💍 חתונה"],["bar_mitzvah","✡️ בר/ת מצווה"],["brit","👶 ברית"],["other","🎉 אחר"]].map(([v,l])=>(
+              <button key={v} onClick={()=>setForm(f=>({...f,event_type:v}))}
+                style={{background:form.event_type===v?`linear-gradient(135deg,${C.blueM},${C.blueL})`:C.blueXL,color:form.event_type===v?"#fff":C.text,border:`2px solid ${form.event_type===v?"transparent":C.border}`,borderRadius:12,padding:"10px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                {l}
+              </button>
+            ))}
+          </div>
+
+          {/* שמות */}
+          {form.event_type==="wedding"&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+            <div>
+              <div style={{fontSize:11,color:C.muted,fontWeight:700,marginBottom:4}}>שם החתן</div>
+              <input value={form.groom_name} onChange={e=>setForm(f=>({...f,groom_name:e.target.value}))} placeholder="עמית"
+                style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 12px",fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+            </div>
+            <div>
+              <div style={{fontSize:11,color:C.muted,fontWeight:700,marginBottom:4}}>שם הכלה</div>
+              <input value={form.bride_name} onChange={e=>setForm(f=>({...f,bride_name:e.target.value}))} placeholder="אורנה"
+                style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 12px",fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+            </div>
+          </div>}
+
+          {/* שם אירוע */}
+          <div style={{marginBottom:12}}>
+            <div style={{fontSize:11,color:C.muted,fontWeight:700,marginBottom:4}}>שם האירוע *</div>
+            <input value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="חתונת עמית ואורנה"
+              style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 12px",fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+          </div>
+
+          {/* תאריך + שעה */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+            <div>
+              <div style={{fontSize:11,color:C.muted,fontWeight:700,marginBottom:4}}>תאריך</div>
+              <input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}
+                style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 12px",fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+            </div>
+            <div>
+              <div style={{fontSize:11,color:C.muted,fontWeight:700,marginBottom:4}}>שעה</div>
+              <input type="time" value={form.event_time} onChange={e=>setForm(f=>({...f,event_time:e.target.value}))}
+                style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 12px",fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+            </div>
+          </div>
+
+          {/* אולם */}
+          <div style={{marginBottom:20}}>
+            <div style={{fontSize:11,color:C.muted,fontWeight:700,marginBottom:4}}>שם האולם / מקום</div>
+            <input value={form.venue} onChange={e=>setForm(f=>({...f,venue:e.target.value}))} placeholder="אולמי Sidor-IL"
+              style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 12px",fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+          </div>
+
+          <button onClick={create} disabled={creating||!form.name.trim()}
+            style={{width:"100%",background:form.name.trim()?`linear-gradient(135deg,${C.blueM},${C.blueL})`:"#E8EEFF",color:form.name.trim()?"#fff":C.muted,border:"none",borderRadius:14,padding:"14px",fontSize:16,fontWeight:700,cursor:form.name.trim()?"pointer":"default",fontFamily:"inherit",boxShadow:form.name.trim()?`0 4px 16px ${C.blueL}44`:"none"}}>
+            {creating?"יוצר...":"✨ צור אירוע ←"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminLogin({ onSuccess, onClose }) {
   const [pass,setPass]=useState("");
   const [err,setErr]=useState("");
@@ -3687,7 +3830,7 @@ export default function App() {
   </>);
 
   if(!event)return(<><style>{`@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;800;900&display=swap'); *{box-sizing:border-box;margin:0;padding:0} @keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    <EventPicker user={user} onSelect={selectEvent} onLogout={logout} onBackToLanding={()=>setShowLanding(true)}/>
+    <CreateEventScreen user={user} onSelect={selectEvent} onLogout={logout}/>
   </>);
 
   return(<><style>{`@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;800;900&display=swap'); *{box-sizing:border-box;margin:0;padding:0} ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-thumb{background:${C.border};border-radius:4px} @keyframes spin{to{transform:rotate(360deg)}} @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}`}</style>
