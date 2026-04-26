@@ -1665,9 +1665,15 @@ function SeatingApp({ user, event, onBack }) {
       <aside style={{width:320,background:C.surface,borderLeft:`1px solid ${C.border}`,display:"flex",flexDirection:"column",overflow:"hidden",flexShrink:0}}>
         {selTable?(
           <div style={{display:"flex",flexDirection:"column",height:"100%",overflow:"hidden"}}>
-            <div style={{padding:"14px 16px",borderBottom:`1px solid ${C.border}`,background:C.blueXL,flexShrink:0}}>
-              <button onClick={()=>setSelected(null)} style={{background:"none",border:"none",color:C.blue,cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"inherit",padding:0,marginBottom:10}}>← חזרה לרשימה</button>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            {/* כפתור חזרה — בולט */}
+            <div style={{padding:"10px 14px",background:`linear-gradient(135deg,${C.blueM},${C.blueL})`,flexShrink:0}}>
+              <button onClick={()=>setSelected(null)}
+                style={{width:"100%",background:"rgba(255,255,255,.2)",border:"2px solid rgba(255,255,255,.6)",color:"#fff",cursor:"pointer",fontSize:14,fontWeight:800,fontFamily:"inherit",borderRadius:10,padding:"9px",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                ← חזרה לרשימת אורחים
+              </button>
+            </div>
+            <div style={{padding:"12px 14px",borderBottom:`1px solid ${C.border}`,background:C.blueXL,flexShrink:0}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
                 <span style={{fontWeight:800,fontSize:15,color:C.text}}>{selTable.name}</span>
                 <span style={{background:sColor(selTable)+"22",color:sColor(selTable),borderRadius:100,fontSize:12,fontWeight:700,padding:"2px 10px"}}>{(selTable.guests||[]).length}/{selTable.seats}</span>
               </div>
@@ -1678,23 +1684,33 @@ function SeatingApp({ user, event, onBack }) {
             <div style={{flex:1,overflowY:"auto",padding:"12px 14px"}}>
               {(selTable.guests||[]).length===0&&<p style={{color:C.muted,fontSize:13,textAlign:"center",marginTop:20}}>גרור אורחים לכאן</p>}
               {(selTable.guests||[]).map(g=>(
-                <div key={g.id} style={{display:"flex",alignItems:"center",gap:8,background:C.blueXL,border:`1px solid ${C.border}`,borderRadius:12,padding:"9px 11px",marginBottom:6}}>
-                  <div style={{width:30,height:30,borderRadius:"50%",background:`linear-gradient(135deg,${C.blueM},${C.blueL})`,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,flexShrink:0}}>{g.name[0]}</div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:13,fontWeight:600,color:C.text}}>{g.name}</div>
-                    {g.phone&&<div style={{fontSize:11,color:C.muted}}>{g.phone}</div>}
+                <div key={g.id} draggable onDragStart={e=>{e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("guestId",String(g.id));e.dataTransfer.setData("fromTable",String(selTable.id));}}
+                  style={{display:"flex",alignItems:"center",gap:8,background:"#fff",border:`1px solid ${C.border}`,borderRadius:12,padding:"9px 11px",marginBottom:6,cursor:"grab"}}
+                  onMouseEnter={e=>e.currentTarget.style.borderColor=C.blueL}
+                  onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:`linear-gradient(135deg,${C.blueM},${C.blueL})`,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,flexShrink:0}}>{g.name[0]}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:700,color:C.text}}>{g.name}</div>
+                    <div style={{display:"flex",gap:4,marginTop:2,flexWrap:"wrap"}}>
+                      {g.relation&&<span style={{fontSize:10,background:C.blueXL,color:C.blue,borderRadius:100,padding:"1px 6px",fontWeight:600}}>{g.relation}</span>}
+                      <RsvpBadge rsvp={g.rsvp}/>
+                    </div>
                   </div>
-                  <RsvpBadge rsvp={g.rsvp}/>
-                  <button onClick={e=>{e.stopPropagation();removeFromTable(selTable.id,g);}}
-                    style={{background:"#FEF2F2",border:`1px solid ${C.danger}30`,color:C.danger,borderRadius:8,padding:"5px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:700,flexShrink:0}}>
-                    הסר
-                  </button>
+                  <div style={{display:"flex",gap:4,flexShrink:0}}>
+                    <button onClick={e=>{e.stopPropagation();setEditGuestData(g);}} style={{background:C.blueXL,border:`1px solid ${C.border}`,color:C.blue,borderRadius:7,padding:"4px 7px",fontSize:11,cursor:"pointer",fontFamily:"inherit",fontWeight:700}}>✏️</button>
+                    <button onClick={e=>{e.stopPropagation();removeFromTable(selTable.id,g);}} style={{background:"#FEF2F2",border:`1px solid ${C.danger}30`,color:C.danger,borderRadius:7,padding:"4px 7px",fontSize:11,cursor:"pointer",fontFamily:"inherit",fontWeight:700}}>הסר</button>
+                  </div>
                 </div>
               ))}
               <div onDragOver={e=>{e.preventDefault();e.stopPropagation();}} onDrop={e=>{e.preventDefault();e.stopPropagation();const gid=e.dataTransfer.getData("guestId");const f=e.dataTransfer.getData("fromTable")||null;if(gid)dropOnTable(selTable.id,gid,f);}}
-                style={{border:`2px dashed ${C.border}`,borderRadius:12,padding:"16px",textAlign:"center",color:C.muted,fontSize:13,marginTop:10,background:C.blueXL}}>
-                + שחרר אורח כאן
+                style={{border:`2px dashed ${C.blueL}`,borderRadius:12,padding:"16px",textAlign:"center",color:C.blue,fontSize:13,marginTop:10,background:C.blueXL,fontWeight:700}}>
+                ⬇ שחרר אורח כאן
               </div>
+            </div>
+            <div style={{padding:"10px 14px",borderTop:`1px solid ${C.border}`,flexShrink:0,background:"#fff"}}>
+              <button onClick={()=>setModal("addGuest")} style={{width:"100%",background:`linear-gradient(135deg,${C.blueM},${C.blueL})`,color:"#fff",border:"none",borderRadius:10,padding:"9px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                ➕ הוסף אורח לשולחן
+              </button>
             </div>
           </div>
         ):(
@@ -1710,28 +1726,29 @@ function SeatingApp({ user, event, onBack }) {
               {guests.length===0&&<div style={{textAlign:"center",marginTop:30}}><div style={{fontSize:40}}>🎉</div><p style={{color:C.success,fontWeight:700,fontSize:14,marginTop:8}}>כולם מוסבים!</p></div>}
               {guests.filter(g=>g.name.toLowerCase().includes(search.toLowerCase())).map(g=>(
                 <div key={g.id} draggable onDragStart={e=>{e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("guestId",String(g.id));}}
-                  style={{display:"flex",alignItems:"center",gap:8,background:C.blueXL,border:`1px solid ${C.border}`,borderRadius:12,padding:"8px 11px",cursor:"grab",marginBottom:6}}
+                  style={{display:"flex",alignItems:"center",gap:8,background:"#fff",border:`1px solid ${C.border}`,borderRadius:12,padding:"8px 11px",cursor:"grab",marginBottom:6}}
                   onMouseEnter={e=>e.currentTarget.style.borderColor=C.blueL}
                   onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
                   <div style={{width:30,height:30,borderRadius:"50%",background:`linear-gradient(135deg,${C.blueM},${C.blueL})`,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,flexShrink:0}}>{g.name[0]}</div>
-                  <div style={{flex:1}}>
+                  <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:13,fontWeight:600,color:C.text}}>{g.name}</div>
-                    {g.phone&&<div style={{fontSize:11,color:C.muted}}>{g.phone}</div>}
+                    <div style={{display:"flex",gap:4,marginTop:2,flexWrap:"wrap"}}>
+                      {g.relation&&<span style={{fontSize:10,background:C.blueXL,color:C.blue,borderRadius:100,padding:"1px 6px",fontWeight:600}}>{g.relation}</span>}
+                      <RsvpBadge rsvp={g.rsvp}/>
+                    </div>
                   </div>
-                  <RsvpBadge rsvp={g.rsvp}/>
+                  <button onClick={e=>{e.stopPropagation();setEditGuestData(g);}} style={{background:C.blueXL,border:`1px solid ${C.border}`,color:C.blue,borderRadius:7,padding:"4px 8px",fontSize:11,cursor:"pointer",fontFamily:"inherit",fontWeight:700,flexShrink:0}}>✏️</button>
                 </div>
               ))}
             </div>
-            {/* כפתורי הוספה — תמיד נראים */}
-            <div style={{padding:"10px 14px",borderTop:`1px solid ${C.border}`,flexShrink:0,background:C.surface}}>
+            <div style={{padding:"10px 14px",borderTop:`1px solid ${C.border}`,flexShrink:0,background:"#fff"}}>
               <div style={{display:"flex",gap:8,marginBottom:8}}>
                 <input value={newGuest} onChange={e=>setNewGuest(e.target.value)} placeholder="שם אורח חדש..."
                   style={{flex:1,background:C.blueXL,border:`1.5px solid ${C.border}`,borderRadius:12,padding:"9px 12px",fontSize:13,color:C.text,outline:"none",fontFamily:"inherit"}}
                   onKeyDown={e=>e.key==="Enter"&&addGuest()}/>
                 <button onClick={addGuest} style={{background:`linear-gradient(135deg,${C.blueM},${C.blueL})`,color:"#fff",border:"none",borderRadius:12,padding:"9px 16px",cursor:"pointer",fontSize:16,fontWeight:700}}>+</button>
               </div>
-              <button onClick={()=>setModal("addGuest")}
-                style={{width:"100%",background:C.blueXL,color:C.blue,border:`1.5px solid ${C.border}`,borderRadius:12,padding:"8px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+              <button onClick={()=>setModal("addGuest")} style={{width:"100%",background:C.blueXL,color:C.blue,border:`1.5px solid ${C.border}`,borderRadius:12,padding:"8px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
                 ➕ הוסף עם פרטים מלאים
               </button>
             </div>
@@ -1749,10 +1766,73 @@ function SeatingApp({ user, event, onBack }) {
               {tables.map(t=>{const hmd=e=>{e.stopPropagation();setSelected(t.id);const ox=e.clientX-t.x,oy=e.clientY-t.y;const mv=me=>moveTablePos(t.id,me.clientX-ox,me.clientY-oy);const up=()=>{saveTablePos(t.id,t.x,t.y);window.removeEventListener("mousemove",mv);window.removeEventListener("mouseup",up);};window.addEventListener("mousemove",mv);window.addEventListener("mouseup",up);};return<TableNode key={t.id} table={t} selected={selected===t.id} onMouseDown={hmd} onDrop={e=>{const gid=e.dataTransfer.getData("guestId");const f=e.dataTransfer.getData("fromTable")||null;if(gid)dropOnTable(t.id,gid,f);}}/>;} )}
             </div>
           </div>
-          <div style={{padding:"6px 16px",background:C.surface,borderTop:`1px solid ${C.border}`,display:"flex",gap:16,fontSize:11,color:C.muted,flexShrink:0}}>{Object.entries(TABLE_TYPES).map(([k,v])=><span key={k}>{v.icon} {v.label}</span>)}<span style={{marginRight:"auto"}}>💡 גרור שולחנות · שחרר אורחים</span></div>
+          <div style={{padding:"6px 16px",background:C.surface,borderTop:`1px solid ${C.border}`,display:"flex",gap:16,fontSize:11,color:C.muted,flexShrink:0}}>
+            {Object.entries(TABLE_TYPES).map(([k,v])=><span key={k}>{v.icon} {v.label}</span>)}
+            <span style={{marginRight:"auto"}}>💡 גרור שולחנות · שחרר אורחים לשולחן</span>
+          </div>
         </>}
-        {view==="list"&&<div style={{flex:1,overflowY:"auto",padding:20}}><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))",gap:14}}>{tables.map(t=>(<Card key={t.id} onClick={()=>{setSelected(t.id);setView("map");}} style={{padding:16,cursor:"pointer",border:`1.5px solid ${selected===t.id?C.blueL:C.border}`}} onMouseEnter={e=>e.currentTarget.style.borderColor=C.blueL} onMouseLeave={e=>e.currentTarget.style.borderColor=selected===t.id?C.blueL:C.border}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:16}}>{TABLE_TYPES[t.type]?.icon}</span><span style={{fontWeight:800,fontSize:14,color:C.text}}>{t.name}</span></div><span style={{background:sColor(t)+"22",color:sColor(t),borderRadius:100,fontSize:12,fontWeight:700,padding:"2px 10px"}}>{(t.guests||[]).length}/{t.seats}</span></div><div style={{height:4,background:C.blueXL,borderRadius:2,overflow:"hidden",marginBottom:8}}><div style={{height:"100%",width:`${pct(t)}%`,background:`linear-gradient(90deg,${C.blueM},${C.blueL})`,transition:"width .4s"}}/></div><div style={{fontSize:11,color:C.muted}}>{(t.guests||[]).slice(0,3).map(g=>g.name).join(" · ")}{(t.guests||[]).length>3?` +${(t.guests||[]).length-3}`:""}</div></Card>))}</div></div>}
-        {view==="guests"&&<div style={{flex:1,overflowY:"auto",padding:20}}><div style={{display:"flex",gap:12,marginBottom:20,flexWrap:"wrap"}}>{[{l:"סה״כ",v:total,c:C.blue,i:"👥"},{l:"מוסבים",v:seated,c:C.success,i:"✅"},{l:"ממתינים",v:guests.length,c:C.gold,i:"⏳"},{l:"פנויים",v:tables.reduce((s,t)=>s+t.seats,0)-seated,c:C.blueM,i:"🪑"}].map(({l,v,c,i})=>(<Card key={l} style={{padding:"14px 18px",borderTop:`3px solid ${c}`,minWidth:110}}><div style={{fontSize:20,marginBottom:2}}>{i}</div><div style={{fontSize:24,fontWeight:900,color:c,lineHeight:1}}>{v}</div><div style={{fontSize:11,color:C.muted,marginTop:3,fontWeight:600}}>{l}</div></Card>))}</div>{tables.map(t=>(<Card key={t.id} style={{marginBottom:10,overflow:"hidden"}}><div style={{padding:"10px 16px",background:C.blueXL,borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:8}}><span>{TABLE_TYPES[t.type]?.icon}</span><span style={{fontWeight:800,flex:1,fontSize:14,color:C.text}}>{t.name}</span><span style={{background:sColor(t)+"22",color:sColor(t),borderRadius:100,fontSize:11,fontWeight:700,padding:"2px 10px"}}>{(t.guests||[]).length}/{t.seats}</span></div><div style={{padding:"10px 16px",display:"flex",flexWrap:"wrap",gap:6}}>{(t.guests||[]).length===0?<span style={{color:C.muted,fontSize:13}}>אין אורחים</span>:(t.guests||[]).map(g=><span key={g.id} style={{background:C.blueXL,border:`1px solid ${C.border}`,borderRadius:100,padding:"3px 12px",fontSize:13,color:C.text}}>{g.name}</span>)}</div></Card>))}</div>}
+        {view==="list"&&<div style={{flex:1,overflowY:"auto",padding:20}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))",gap:14}}>
+            {tables.map(t=>(
+              <Card key={t.id} onClick={()=>{setSelected(t.id);setView("map");}} style={{padding:16,cursor:"pointer",border:`1.5px solid ${selected===t.id?C.blueL:C.border}`}}
+                onMouseEnter={e=>e.currentTarget.style.borderColor=C.blueL}
+                onMouseLeave={e=>e.currentTarget.style.borderColor=selected===t.id?C.blueL:C.border}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:16}}>{TABLE_TYPES[t.type]?.icon}</span>
+                    <span style={{fontWeight:800,fontSize:14,color:C.text}}>{t.name}</span>
+                  </div>
+                  <span style={{background:sColor(t)+"22",color:sColor(t),borderRadius:100,fontSize:12,fontWeight:700,padding:"2px 10px"}}>{(t.guests||[]).length}/{t.seats}</span>
+                </div>
+                <div style={{height:4,background:C.blueXL,borderRadius:2,overflow:"hidden",marginBottom:8}}>
+                  <div style={{height:"100%",width:`${pct(t)}%`,background:`linear-gradient(90deg,${C.blueM},${C.blueL})`,transition:"width .4s"}}/>
+                </div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                  {(t.guests||[]).length===0?<span style={{color:C.muted,fontSize:12}}>אין אורחים</span>:
+                  (t.guests||[]).slice(0,4).map(g=>(
+                    <span key={g.id} style={{background:C.blueXL,borderRadius:100,padding:"2px 8px",fontSize:11,color:C.text}}>
+                      {g.name}{g.relation&&<span style={{color:C.muted,fontSize:9}}> ({g.relation})</span>}
+                    </span>
+                  ))}
+                  {(t.guests||[]).length>4&&<span style={{fontSize:11,color:C.muted}}>+{(t.guests||[]).length-4}</span>}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>}
+        {view==="guests"&&<div style={{flex:1,overflowY:"auto",padding:20}}>
+          <div style={{display:"flex",gap:12,marginBottom:20,flexWrap:"wrap"}}>
+            {[{l:"סה״כ",v:total,c:C.blue,i:"👥"},{l:"מוסבים",v:seated,c:C.success,i:"✅"},{l:"ממתינים",v:guests.length,c:C.gold,i:"⏳"},{l:"פנויים",v:tables.reduce((s,t)=>s+t.seats,0)-seated,c:C.blueM,i:"🪑"}].map(({l,v,c,i})=>(
+              <Card key={l} style={{padding:"14px 18px",borderTop:`3px solid ${c}`,minWidth:110}}>
+                <div style={{fontSize:20,marginBottom:2}}>{i}</div>
+                <div style={{fontSize:24,fontWeight:900,color:c,lineHeight:1}}>{v}</div>
+                <div style={{fontSize:11,color:C.muted,marginTop:3,fontWeight:600}}>{l}</div>
+              </Card>
+            ))}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
+            {[...guests,...tables.flatMap(t=>t.guests||[])].map(g=>{
+              const tbl=tables.find(t=>(t.guests||[]).some(x=>x.id===g.id));
+              return(
+                <div key={g.id} draggable onDragStart={e=>{e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("guestId",String(g.id));if(tbl)e.dataTransfer.setData("fromTable",String(tbl.id));}}
+                  style={{background:"#fff",border:`1px solid ${C.border}`,borderRadius:12,padding:"10px 14px",cursor:"grab",display:"flex",alignItems:"center",gap:10}}
+                  onMouseEnter={e=>e.currentTarget.style.borderColor=C.blueL}
+                  onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:`linear-gradient(135deg,${C.blueM},${C.blueL})`,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,flexShrink:0}}>{g.name[0]}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:700,color:C.text}}>{g.name}</div>
+                    <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:2}}>
+                      {g.relation&&<span style={{fontSize:10,background:C.blueXL,color:C.blue,borderRadius:100,padding:"1px 6px"}}>{g.relation}</span>}
+                      {tbl&&<span style={{fontSize:10,background:"#F0FFF4",color:C.success,borderRadius:100,padding:"1px 6px"}}>🪑 {tbl.name}</span>}
+                      <RsvpBadge rsvp={g.rsvp}/>
+                    </div>
+                  </div>
+                  <button onClick={()=>setEditGuestData(g)} style={{background:C.blueXL,border:`1px solid ${C.border}`,color:C.blue,borderRadius:7,padding:"4px 8px",fontSize:11,cursor:"pointer",fontFamily:"inherit",fontWeight:700,flexShrink:0}}>✏️</button>
+                </div>
+              );
+            })}
+          </div>
+        </div>}
       </main>
     </div>}
 
