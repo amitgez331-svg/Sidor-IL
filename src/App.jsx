@@ -18,6 +18,15 @@ const TABLE_TYPES = {
   knight: { label:"שולחן אבירים", icon:"👑", defaultSeats:20 },
 };
 
+const RELATION_COLORS = {
+  "משפחה קרובה":   "#E53E3E",
+  "משפחה מורחבת":  "#DD6B20",
+  "חברים קרובים":  "#38A169",
+  "חברים רחוקים":  "#3182CE",
+  "חברים של ההורים":"#805AD5",
+  "ללא שיוך":      "#A0AEC0",
+};
+
 const pct    = t => t.seats ? Math.round((t.guests||[]).length/t.seats*100) : 0;
 const sColor = t => { const g=(t.guests||[]).length; return g>=t.seats?C.danger:g>=t.seats*.8?C.gold:C.success; };
 const isMobile = () => window.innerWidth < 1024;
@@ -1729,11 +1738,14 @@ function SeatingApp({ user, event, onBack }) {
                   style={{display:"flex",alignItems:"center",gap:8,background:"#fff",border:`1px solid ${C.border}`,borderRadius:12,padding:"8px 11px",cursor:"grab",marginBottom:6}}
                   onMouseEnter={e=>e.currentTarget.style.borderColor=C.blueL}
                   onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
-                  <div style={{width:30,height:30,borderRadius:"50%",background:`linear-gradient(135deg,${C.blueM},${C.blueL})`,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,flexShrink:0}}>{g.name[0]}</div>
+                  <div style={{width:30,height:30,borderRadius:"50%",background:`linear-gradient(135deg,${C.blueM},${C.blueL})`,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,flexShrink:0,position:"relative"}}>
+                    {g.name[0]}
+                    <div style={{position:"absolute",bottom:-1,right:-1,width:10,height:10,borderRadius:"50%",background:RELATION_COLORS[g.relation]||"#CBD5E0",border:"2px solid #fff"}}/>
+                  </div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:13,fontWeight:600,color:C.text}}>{g.name}</div>
                     <div style={{display:"flex",gap:4,marginTop:2,flexWrap:"wrap"}}>
-                      {g.relation&&<span style={{fontSize:10,background:C.blueXL,color:C.blue,borderRadius:100,padding:"1px 6px",fontWeight:600}}>{g.relation}</span>}
+                      {g.relation&&<span style={{fontSize:10,background:RELATION_COLORS[g.relation]+"22"||C.blueXL,color:RELATION_COLORS[g.relation]||C.blue,borderRadius:100,padding:"1px 6px",fontWeight:600}}>{g.relation}</span>}
                       <RsvpBadge rsvp={g.rsvp}/>
                     </div>
                   </div>
@@ -1772,11 +1784,12 @@ function SeatingApp({ user, event, onBack }) {
           </div>
         </>}
         {view==="list"&&<div style={{flex:1,overflowY:"auto",padding:20}}>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))",gap:14}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
             {tables.map(t=>(
-              <Card key={t.id} onClick={()=>{setSelected(t.id);setView("map");}} style={{padding:16,cursor:"pointer",border:`1.5px solid ${selected===t.id?C.blueL:C.border}`}}
-                onMouseEnter={e=>e.currentTarget.style.borderColor=C.blueL}
-                onMouseLeave={e=>e.currentTarget.style.borderColor=selected===t.id?C.blueL:C.border}>
+              <Card key={t.id} style={{padding:16,border:`1.5px solid ${selected===t.id?C.blueL:C.border}`}}
+                onDragOver={e=>e.preventDefault()}
+                onDrop={e=>{e.preventDefault();const gid=e.dataTransfer.getData("guestId");const f=e.dataTransfer.getData("fromTable")||null;if(gid)dropOnTable(t.id,gid,f);}}>
+                {/* כותרת שולחן */}
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
                     <span style={{fontSize:16}}>{TABLE_TYPES[t.type]?.icon}</span>
@@ -1784,18 +1797,34 @@ function SeatingApp({ user, event, onBack }) {
                   </div>
                   <span style={{background:sColor(t)+"22",color:sColor(t),borderRadius:100,fontSize:12,fontWeight:700,padding:"2px 10px"}}>{(t.guests||[]).length}/{t.seats}</span>
                 </div>
-                <div style={{height:4,background:C.blueXL,borderRadius:2,overflow:"hidden",marginBottom:8}}>
+                <div style={{height:4,background:C.blueXL,borderRadius:2,overflow:"hidden",marginBottom:10}}>
                   <div style={{height:"100%",width:`${pct(t)}%`,background:`linear-gradient(90deg,${C.blueM},${C.blueL})`,transition:"width .4s"}}/>
                 </div>
-                <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-                  {(t.guests||[]).length===0?<span style={{color:C.muted,fontSize:12}}>אין אורחים</span>:
-                  (t.guests||[]).slice(0,4).map(g=>(
-                    <span key={g.id} style={{background:C.blueXL,borderRadius:100,padding:"2px 8px",fontSize:11,color:C.text}}>
-                      {g.name}{g.relation&&<span style={{color:C.muted,fontSize:9}}> ({g.relation})</span>}
-                    </span>
+                {/* אורחים עם צבעי קטגוריה */}
+                <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
+                  {(t.guests||[]).length===0?(
+                    <div style={{border:`2px dashed ${C.border}`,borderRadius:10,padding:"10px",textAlign:"center",width:"100%",color:C.muted,fontSize:12}}>
+                      ⬇ שחרר אורח כאן
+                    </div>
+                  ):(t.guests||[]).map(g=>(
+                    <div key={g.id} draggable
+                      onDragStart={e=>{e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("guestId",String(g.id));e.dataTransfer.setData("fromTable",String(t.id));}}
+                      onClick={()=>setEditGuestData(g)}
+                      style={{display:"flex",alignItems:"center",gap:5,background:"#fff",border:`1px solid ${C.border}`,borderRadius:20,padding:"3px 10px 3px 5px",cursor:"grab",fontSize:12,color:C.text}}
+                      onMouseEnter={e=>e.currentTarget.style.borderColor=C.blueL}
+                      onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
+                      {/* עיגול צבע לפי קטגוריה */}
+                      <div style={{width:12,height:12,borderRadius:"50%",background:RELATION_COLORS[g.relation]||"#CBD5E0",flexShrink:0}}/>
+                      {g.name}
+                    </div>
                   ))}
-                  {(t.guests||[]).length>4&&<span style={{fontSize:11,color:C.muted}}>+{(t.guests||[]).length-4}</span>}
                 </div>
+                {/* אזור גרירה + drop */}
+                {(t.guests||[]).length>0&&(
+                  <div style={{border:`2px dashed ${C.border}`,borderRadius:8,padding:"6px",textAlign:"center",color:C.muted,fontSize:11}}>
+                    ⬇ שחרר אורח לשולחן זה
+                  </div>
+                )}
               </Card>
             ))}
           </div>
@@ -2135,15 +2164,16 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
   const [search,setSearch]=useState("");
   const [editG,setEditG]=useState(null);
   const [saving,setSaving]=useState(false);
+  const [filterRsvp,setFilterRsvp]=useState("all");
   const RELATIONS=["משפחה קרובה","משפחה מורחבת","חברים קרובים","חברים רחוקים","חברים של ההורים","ללא שיוך"];
 
   const confirmed=allGuests.filter(g=>g.rsvp==="confirmed").reduce((s,g)=>s+(g.guest_count||1),0);
   const declined=allGuests.filter(g=>g.rsvp==="declined").reduce((s,g)=>s+(g.guest_count||1),0);
-  const pending=allGuests.filter(g=>!g.rsvp||g.rsvp==="pending").reduce((s,g)=>s+(g.guest_count||1),0);
   const total=allGuests.reduce((s,g)=>s+(g.guest_count||1),0);
 
-  const filtered=allGuests.filter(g=>g.name.toLowerCase().includes(search.toLowerCase())||
-    (g.phone&&g.phone.includes(search)));
+  const filtered=allGuests
+    .filter(g=>g.name.toLowerCase().includes(search.toLowerCase())||(g.phone&&g.phone.includes(search)))
+    .filter(g=>filterRsvp==="all"||g.rsvp===filterRsvp||(filterRsvp==="pending"&&(!g.rsvp||g.rsvp==="pending")));
 
   const updateRsvp=async(g,rsvp)=>{
     await sb.from("guests").update({rsvp}).eq("id",g.id);
@@ -2154,13 +2184,9 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
   const saveEdit=async()=>{
     if(!editG)return;
     setSaving(true);
-    await sb.from("guests").update({
-      name:editG.name,phone:editG.phone,rsvp:editG.rsvp,
-      guest_count:editG.guest_count,relation:editG.relation,note:editG.note||""
-    }).eq("id",editG.id);
+    await sb.from("guests").update({name:editG.name,phone:editG.phone,rsvp:editG.rsvp,guest_count:editG.guest_count,relation:editG.relation,note:editG.note||""}).eq("id",editG.id);
     await loadAll();
-    setSaving(false);
-    setEditG(null);
+    setSaving(false);setEditG(null);
   };
 
   const deleteGuest=async(g)=>{
@@ -2170,42 +2196,46 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
     setTables(ts=>ts.map(t=>({...t,guests:(t.guests||[]).filter(x=>x.id!==g.id)})));
   };
 
+  const getTableNum=(g)=>{
+    const t=tables.find(t=>(t.guests||[]).some(x=>x.id===g.id));
+    return t?tables.indexOf(t)+1:null;
+  };
+
   return(
-    <div style={{direction:"rtl",padding:"24px 28px"}}>
+    <div style={{direction:"rtl",padding:"20px 24px"}}>
       {/* כותרת */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
         <div>
-          <div style={{fontSize:22,fontWeight:900,color:"#1A202C"}}>אישורי הגעה</div>
+          <div style={{fontSize:20,fontWeight:900,color:"#1A202C"}}>אישורי הגעה</div>
           <div style={{fontSize:13,color:"#718096"}}>טבלת ניהול מוזמנים לאירוע</div>
         </div>
-        <div style={{display:"flex",gap:10}}>
-          <button onClick={onAddGuest}
-            style={{background:"#2B6CB0",color:"#fff",border:"none",borderRadius:10,padding:"9px 18px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>
-            ➕ הוסף מוזמן/ת
-          </button>
-        </div>
+        <button onClick={onAddGuest}
+          style={{background:"#2B6CB0",color:"#fff",border:"none",borderRadius:10,padding:"9px 18px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>
+          ➕ הוסף מוזמן/ת
+        </button>
       </div>
 
       {/* סטטיסטיקות */}
-      <div style={{display:"flex",gap:14,marginBottom:20}}>
+      <div style={{display:"flex",gap:10,marginBottom:16}}>
         {[
-          {label:"מגיעים",value:confirmed,color:"#276749",bg:"#F0FFF4",border:"#9AE6B4"},
-          {label:"לא מגיעים",value:declined,color:"#C53030",bg:"#FFF5F5",border:"#FEB2B2"},
-          {label:"ממתינים",value:pending,color:"#718096",bg:"#F7FAFC",border:"#CBD5E0"},
-          {label:"סה״כ מוזמנים",value:total,color:"#2C5282",bg:"#EBF8FF",border:"#90CDF4"},
+          {label:"מגיעים",value:confirmed,color:"#276749",bg:"#F0FFF4",active:filterRsvp==="confirmed",filter:"confirmed"},
+          {label:"לא מגיעים",value:declined,color:"#C53030",bg:"#FFF5F5",active:filterRsvp==="declined",filter:"declined"},
+          {label:"ממתינים",value:allGuests.filter(g=>!g.rsvp||g.rsvp==="pending").reduce((s,g)=>s+(g.guest_count||1),0),color:"#718096",bg:"#F7FAFC",active:filterRsvp==="pending",filter:"pending"},
+          {label:"מוזמנים",value:total,color:"#2C5282",bg:"#EBF8FF",active:filterRsvp==="all",filter:"all"},
         ].map(s=>(
-          <div key={s.label} style={{background:s.bg,border:`1.5px solid ${s.border}`,borderRadius:12,padding:"12px 18px",flex:1,textAlign:"center"}}>
-            <div style={{fontSize:28,fontWeight:900,color:s.color,lineHeight:1}}>{s.value}</div>
-            <div style={{fontSize:12,color:"#718096",marginTop:4,fontWeight:600}}>{s.label}</div>
+          <div key={s.label} onClick={()=>setFilterRsvp(s.filter)}
+            style={{background:s.active?s.color:s.bg,border:`1.5px solid ${s.active?s.color:s.color+"33"}`,borderRadius:10,padding:"10px 16px",flex:1,textAlign:"center",cursor:"pointer",transition:"all .15s"}}>
+            <div style={{fontSize:24,fontWeight:900,color:s.active?"#fff":s.color,lineHeight:1}}>{s.value}</div>
+            <div style={{fontSize:12,color:s.active?"rgba(255,255,255,.8)":s.color,marginTop:3,fontWeight:600}}>{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* חיפוש */}
-      <div style={{background:"#fff",borderRadius:10,border:"1.5px solid #E2E8F0",padding:"9px 14px",display:"flex",alignItems:"center",gap:8,marginBottom:16}}>
+      <div style={{background:"#fff",borderRadius:10,border:"1.5px solid #E2E8F0",padding:"9px 14px",display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
         <span style={{color:"#999"}}>🔍</span>
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="חיפוש באישורי הגעה..."
-          style={{border:"none",outline:"none",fontSize:14,color:"#1A202C",flex:1,fontFamily:"'Heebo',sans-serif",background:"transparent"}}/>
+          style={{border:"none",outline:"none",fontSize:14,color:"#1A202C",flex:1,fontFamily:"inherit",background:"transparent"}}/>
         {search&&<button onClick={()=>setSearch("")} style={{background:"none",border:"none",cursor:"pointer",color:"#999",fontSize:16}}>×</button>}
       </div>
 
@@ -2214,8 +2244,8 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
         <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:900}}>
           <thead>
             <tr style={{background:"#F7FAFC",borderBottom:"2px solid #E2E8F0"}}>
-              {["שם מלא","כמות","אישרו","מס' נייד","שולחן","קרבה","מצב הגעה","פעולות"].map(h=>(
-                <th key={h} style={{padding:"12px 14px",textAlign:"right",fontWeight:800,color:"#718096",fontSize:11,whiteSpace:"nowrap"}}>{h}</th>
+              {["שם מלא","הוזמנו","אישרו","מס' נייד","שולחן","קרבה","עדכון אחרון","הגעה","פעולות"].map(h=>(
+                <th key={h} style={{padding:"11px 12px",textAlign:"right",fontWeight:800,color:"#718096",fontSize:11,whiteSpace:"nowrap"}}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -2224,52 +2254,50 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
               <tr key={g.id} style={{borderBottom:"1px solid #F7FAFC"}}
                 onMouseEnter={e=>e.currentTarget.style.background="#FAFBFF"}
                 onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                <td style={{padding:"11px 14px"}}>
+                <td style={{padding:"10px 12px"}}>
                   <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <div style={{width:32,height:32,borderRadius:"50%",
-                      background:g.rsvp==="confirmed"?"#C6F6D5":g.rsvp==="declined"?"#FED7D7":"#EDF2F7",
-                      display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,
-                      color:g.rsvp==="confirmed"?"#276749":g.rsvp==="declined"?"#C53030":"#718096",flexShrink:0}}>
-                      {g.name[0]}
-                    </div>
+                    <div style={{width:10,height:10,borderRadius:"50%",background:RELATION_COLORS[g.relation]||"#CBD5E0",flexShrink:0}}/>
                     <span style={{fontWeight:700,color:"#1A202C"}}>{g.name}</span>
                   </div>
                 </td>
-                <td style={{padding:"11px 14px",textAlign:"center",fontWeight:700,color:"#2D3748"}}>{g.guest_count||1}</td>
-                <td style={{padding:"11px 14px",textAlign:"center"}}>
+                <td style={{padding:"10px 12px",textAlign:"center",fontWeight:700}}>{g.guest_count||1}</td>
+                <td style={{padding:"10px 12px",textAlign:"center"}}>
                   <span style={{fontWeight:900,color:g.rsvp==="confirmed"?"#276749":"#CBD5E0"}}>
                     {g.rsvp==="confirmed"?g.guest_count||1:0}
                   </span>
                 </td>
-                <td style={{padding:"11px 14px",color:"#718096",direction:"ltr",textAlign:"right",fontSize:12}}>{g.phone||"—"}</td>
-                <td style={{padding:"11px 14px",textAlign:"center"}}>
-                  {g.table_id ? <span style={{background:"#EBF8FF",color:"#2B6CB0",borderRadius:6,padding:"2px 8px",fontWeight:700,fontSize:12}}>{tables.findIndex(t=>t.id===g.table_id)+1||"—"}</span>:<span style={{color:"#CBD5E0"}}>—</span>}
+                <td style={{padding:"10px 12px",color:"#718096",direction:"ltr",textAlign:"right",fontSize:12}}>{g.phone||"—"}</td>
+                <td style={{padding:"10px 12px",textAlign:"center"}}>
+                  {getTableNum(g)?<span style={{background:"#EBF8FF",color:"#2B6CB0",borderRadius:6,padding:"2px 8px",fontWeight:700,fontSize:12}}>{getTableNum(g)}</span>:<span style={{color:"#CBD5E0"}}>—</span>}
                 </td>
-                <td style={{padding:"11px 14px"}}>
-                  <span style={{background:"#F7FAFC",border:"1px solid #E2E8F0",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600,color:"#718096",whiteSpace:"nowrap"}}>
-                    {g.relation||"ללא שיוך"}
-                  </span>
+                <td style={{padding:"10px 12px"}}>
+                  {g.relation&&<span style={{display:"inline-flex",alignItems:"center",gap:4,background:RELATION_COLORS[g.relation]+"15",border:`1px solid ${RELATION_COLORS[g.relation]||"#E2E8F0"}33`,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600,color:RELATION_COLORS[g.relation]||"#718096",whiteSpace:"nowrap"}}>
+                    <span style={{width:6,height:6,borderRadius:"50%",background:RELATION_COLORS[g.relation]||"#CBD5E0",display:"inline-block"}}/>
+                    {g.relation}
+                  </span>}
                 </td>
-                <td style={{padding:"11px 14px"}}>
-                  <select value={g.rsvp||"pending"}
-                    onChange={async e=>{await updateRsvp(g,e.target.value);}}
+                <td style={{padding:"10px 12px",color:"#718096",fontSize:11,whiteSpace:"nowrap"}}>
+                  {new Date().toLocaleDateString("he-IL")}
+                </td>
+                <td style={{padding:"10px 12px"}}>
+                  <select value={g.rsvp||"pending"} onChange={async e=>await updateRsvp(g,e.target.value)}
                     style={{border:`1.5px solid ${g.rsvp==="confirmed"?"#9AE6B4":g.rsvp==="declined"?"#FEB2B2":"#CBD5E0"}`,
                       background:g.rsvp==="confirmed"?"#F0FFF4":g.rsvp==="declined"?"#FFF5F5":"#F7FAFC",
                       color:g.rsvp==="confirmed"?"#276749":g.rsvp==="declined"?"#C53030":"#718096",
-                      borderRadius:8,padding:"5px 10px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Heebo',sans-serif",outline:"none"}}>
-                    <option value="pending">לא הופצה הזמנה</option>
+                      borderRadius:8,padding:"4px 8px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",outline:"none"}}>
+                    <option value="pending">לא הופצה</option>
                     <option value="confirmed">מגיע/ה ✓</option>
                     <option value="declined">לא מגיע/ה ✗</option>
                   </select>
                 </td>
-                <td style={{padding:"11px 14px"}}>
-                  <div style={{display:"flex",gap:6}}>
+                <td style={{padding:"10px 12px"}}>
+                  <div style={{display:"flex",gap:5}}>
                     <button onClick={()=>setEditG({...g})}
-                      style={{background:"#EBF8FF",color:"#2B6CB0",border:"1.5px solid #BEE3F8",borderRadius:8,padding:"5px 12px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
+                      style={{background:"#EBF8FF",color:"#2B6CB0",border:"1.5px solid #BEE3F8",borderRadius:8,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
                       עריכה מהירה
                     </button>
                     <button onClick={()=>deleteGuest(g)}
-                      style={{background:"#FFF5F5",color:"#C53030",border:"1.5px solid #FED7D7",borderRadius:8,padding:"5px 8px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+                      style={{background:"#FFF5F5",color:"#C53030",border:"1.5px solid #FED7D7",borderRadius:8,padding:"4px 7px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>
                       🗑️
                     </button>
                   </div>
@@ -2283,48 +2311,66 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
         </div>
       </div>
 
-      {/* מודל עריכה מהירה */}
+      {/* מקרא קטגוריות */}
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:14}}>
+        {Object.entries(RELATION_COLORS).map(([rel,col])=>(
+          <div key={rel} style={{display:"flex",alignItems:"center",gap:5,fontSize:12,color:"#718096"}}>
+            <div style={{width:10,height:10,borderRadius:"50%",background:col}}/>
+            {rel}
+          </div>
+        ))}
+      </div>
+
+      {/* מודל עריכה מהירה — בסגנון diginet */}
       {editG&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setEditG(null)}>
-          <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:20,padding:32,width:480,maxWidth:"95vw",direction:"rtl",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.2)"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
-              <div style={{fontSize:18,fontWeight:900,color:"#1A202C"}}>עריכה מהירה</div>
-              <button onClick={()=>setEditG(null)} style={{background:"#F7FAFC",border:"none",borderRadius:8,width:32,height:32,cursor:"pointer",fontSize:18,color:"#718096"}}>×</button>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:20,padding:32,width:500,maxWidth:"95vw",direction:"rtl",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.2)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{border:"1.5px solid #E2E8F0",borderRadius:20,padding:"5px 16px",fontSize:13,fontWeight:700,color:"#1A202C"}}>עריכת מוזמן/ת</div>
+              <button onClick={()=>setEditG(null)} style={{background:"#F7FAFC",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:18,color:"#718096",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
             </div>
 
             {/* שם */}
-            <div style={{marginBottom:16}}>
-              <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:6}}>שם המוזמן/ת</div>
-              <input value={editG.name} onChange={e=>setEditG(g=>({...g,name:e.target.value}))}
-                style={{width:"100%",border:"1.5px solid #E2E8F0",borderRadius:10,padding:"10px 14px",fontSize:14,outline:"none",fontFamily:"'Heebo',sans-serif",boxSizing:"border-box"}}/>
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:6}}>שם המוזמן/ת:</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                <input value={editG.name?.split(" ").slice(1).join(" ")||""} 
+                  onChange={e=>setEditG(g=>({...g,name:(g.name?.split(" ")[0]||"")+" "+e.target.value}))}
+                  placeholder="שם משפחה"
+                  style={{border:"none",borderBottom:"1.5px solid #E2E8F0",padding:"8px 0",fontSize:15,outline:"none",fontFamily:"inherit",textAlign:"right"}}/>
+                <input value={editG.name?.split(" ")[0]||""} 
+                  onChange={e=>setEditG(g=>({...g,name:e.target.value+" "+(g.name?.split(" ").slice(1).join(" ")||"")}))}
+                  placeholder="שם פרטי"
+                  style={{border:"none",borderBottom:"1.5px solid #E2E8F0",padding:"8px 0",fontSize:15,outline:"none",fontFamily:"inherit",textAlign:"right"}}/>
+              </div>
             </div>
 
             {/* טלפון + כמות */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
               <div>
-                <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:6}}>הנייד שלהם</div>
+                <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:6}}>הנייד שלהם:</div>
                 <input value={editG.phone||""} onChange={e=>setEditG(g=>({...g,phone:e.target.value}))} type="tel"
-                  style={{width:"100%",border:"1.5px solid #E2E8F0",borderRadius:10,padding:"10px 14px",fontSize:14,outline:"none",fontFamily:"'Heebo',sans-serif",boxSizing:"border-box",direction:"ltr"}}/>
+                  style={{width:"100%",border:"none",borderBottom:"1.5px solid #E2E8F0",padding:"8px 0",fontSize:15,outline:"none",fontFamily:"inherit",direction:"ltr",boxSizing:"border-box"}}/>
               </div>
               <div>
-                <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:6}}>כמות אורחים</div>
-                <div style={{display:"flex",alignItems:"center",gap:10,border:"1.5px solid #E2E8F0",borderRadius:10,padding:"8px 14px"}}>
-                  <button onClick={()=>setEditG(g=>({...g,guest_count:Math.max(1,(g.guest_count||1)-1)}))} style={{background:"none",border:"none",cursor:"pointer",fontSize:20,fontWeight:700,color:"#2B6CB0",lineHeight:1}}>−</button>
+                <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:6}}>כמות אורחים:</div>
+                <div style={{display:"flex",alignItems:"center",gap:10,border:"1.5px solid #E2E8F0",borderRadius:8,padding:"6px 12px"}}>
+                  <button onClick={()=>setEditG(g=>({...g,guest_count:Math.max(1,(g.guest_count||1)-1)}))} style={{background:"none",border:"none",cursor:"pointer",fontSize:18,fontWeight:700,color:"#2B6CB0"}}>−</button>
                   <span style={{flex:1,textAlign:"center",fontSize:16,fontWeight:800}}>{editG.guest_count||1}</span>
-                  <button onClick={()=>setEditG(g=>({...g,guest_count:(g.guest_count||1)+1}))} style={{background:"none",border:"none",cursor:"pointer",fontSize:20,fontWeight:700,color:"#2B6CB0",lineHeight:1}}>+</button>
+                  <button onClick={()=>setEditG(g=>({...g,guest_count:(g.guest_count||1)+1}))} style={{background:"none",border:"none",cursor:"pointer",fontSize:18,fontWeight:700,color:"#2B6CB0"}}>+</button>
                 </div>
               </div>
             </div>
 
             {/* קרבה */}
-            <div style={{marginBottom:16}}>
-              <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:8}}>קטגוריית קרבה</div>
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:8}}>קטגוריית קרבה:</div>
               <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
                 {RELATIONS.map(r=>(
                   <button key={r} onClick={()=>setEditG(g=>({...g,relation:r}))}
-                    style={{padding:"5px 12px",borderRadius:20,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
-                      border:`1.5px solid ${editG.relation===r?"#E53E3E":"#E2E8F0"}`,
-                      background:editG.relation===r?"#E53E3E":"#fff",
+                    style={{padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
+                      border:`1.5px solid ${editG.relation===r?RELATION_COLORS[r]||"#E53E3E":"#E2E8F0"}`,
+                      background:editG.relation===r?RELATION_COLORS[r]||"#E53E3E":"#fff",
                       color:editG.relation===r?"#fff":"#718096",transition:"all .15s"}}>
                     {r}
                   </button>
@@ -2333,35 +2379,24 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
             </div>
 
             {/* מצב הגעה */}
-            <div style={{marginBottom:16}}>
-              <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:8}}>מצב הגעה</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-                {[["confirmed","✓ מגיע/ה","#F0FFF4","#276749","#9AE6B4"],["pending","⏳ ממתין","#F7FAFC","#718096","#CBD5E0"],["declined","✗ לא מגיע/ה","#FFF5F5","#C53030","#FEB2B2"]].map(([v,l,bg,col,border])=>(
-                  <button key={v} onClick={()=>setEditG(g=>({...g,rsvp:v}))}
-                    style={{background:(editG.rsvp||"pending")===v?col:bg,color:(editG.rsvp||"pending")===v?"#fff":col,
-                      border:`2px solid ${(editG.rsvp||"pending")===v?col:border}`,
-                      borderRadius:10,padding:"10px 6px",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:700,transition:"all .15s"}}>
-                    {l}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* הערה */}
             <div style={{marginBottom:20}}>
-              <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:6}}>הערה</div>
-              <textarea value={editG.note||""} onChange={e=>setEditG(g=>({...g,note:e.target.value}))} placeholder="הוסף הערה..."
-                style={{width:"100%",border:"1.5px solid #E2E8F0",borderRadius:10,padding:"10px 14px",fontSize:13,outline:"none",fontFamily:"'Heebo',sans-serif",boxSizing:"border-box",minHeight:60,resize:"vertical"}}/>
+              <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:8}}>מצב הגעה:</div>
+              <select value={editG.rsvp||"pending"} onChange={e=>setEditG(g=>({...g,rsvp:e.target.value}))}
+                style={{width:"100%",border:"1.5px solid #E2E8F0",borderRadius:10,padding:"10px 14px",fontSize:14,fontFamily:"inherit",outline:"none",background:"#fff"}}>
+                <option value="pending">לא הופצה הזמנה</option>
+                <option value="confirmed">מגיע/ה</option>
+                <option value="declined">לא מגיע/ה</option>
+              </select>
             </div>
 
             <div style={{display:"flex",gap:10}}>
               <button onClick={saveEdit} disabled={saving}
                 style={{flex:2,background:"#2B6CB0",color:"#fff",border:"none",borderRadius:12,padding:"13px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                {saving?"שומר...":"עדכון פרטים ✓"}
+                {saving?"שומר...":"עדכון פרטים"}
               </button>
               <button onClick={()=>setEditG(null)}
                 style={{flex:1,background:"#F7FAFC",color:"#718096",border:"1.5px solid #E2E8F0",borderRadius:12,padding:"12px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                ביטול
+                ביטול וחזרה
               </button>
             </div>
           </div>
@@ -2370,7 +2405,6 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
     </div>
   );
 }
-
 function BudgetScreen({ event }) {
   const CATS = ["אולם","קייטרינג","צילום","מוזיקה","פרחים","הלבשה","הסעות","מתנות","אחר"];
   const [items,setItems]=useState([]);
