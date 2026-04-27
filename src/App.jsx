@@ -85,7 +85,7 @@ function GuestChip({ guest, tableId, onRemove }) {
 }
 
 // ─── ADD/EDIT GUEST MODAL ─────────────────────────────────────────────────────
-function GuestModal({ guest, eventId, onSave, onClose, existingGuests=[] }) {
+function GuestModal({ guest, eventId, onSave, onClose, existingGuests=[], desktop=false }) {
   const [name,setName]=useState(guest?.name||"");
   const [phone,setPhone]=useState(guest?.phone||"");
   const [rsvp,setRsvp]=useState(guest?.rsvp||"pending");
@@ -154,8 +154,8 @@ function GuestModal({ guest, eventId, onSave, onClose, existingGuests=[] }) {
   }
 
   return(
-    <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(13,27,75,.5)",backdropFilter:"blur(6px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:"24px 24px 0 0",padding:"24px 24px 40px",width:"100%",maxWidth:480,direction:"rtl"}}>
+    <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(13,27,75,.5)",backdropFilter:"blur(6px)",display:"flex",alignItems:desktop?"center":"flex-end",justifyContent:"center"}} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:desktop?"20px":"24px 24px 0 0",padding:"24px 24px 40px",width:"100%",maxWidth:480,direction:"rtl",maxHeight:"90vh",overflowY:"auto"}}>
         <div style={{width:40,height:4,borderRadius:2,background:"#E5E7EB",margin:"0 auto 20px"}}/>
         <div style={{fontWeight:800,fontSize:18,color:C.text,marginBottom:18}}>{isEdit?"✏️ עריכת אורח":"➕ הוסף אורח"}</div>
 
@@ -2021,7 +2021,7 @@ function SeatingApp({ user, event, onBack }) {
       </div>
     )}
 
-    {modal==="addGuest"&&<GuestModal eventId={event.id} onClose={()=>setModal(null)} existingGuests={[...guests,...tables.flatMap(t=>t.guests||[])]} onSave={async(data)=>{await addGuest(data);setModal(null);}}/>}
+    {modal==="addGuest"&&<GuestModal eventId={event.id} onClose={()=>setModal(null)} existingGuests={[...guests,...tables.flatMap(t=>t.guests||[])]} onSave={async(data)=>{await addGuest(data);setModal(null);}} desktop={true}/>}
     {modal==="receipt"&&<ReceiptModal tables={tables} onClose={()=>setModal(null)}/>}
     {modal==="addTable"&&<AddTableModal onConfirm={doAddTable} onClose={()=>setModal(null)}/>}
       </div>{/* end main content */}
@@ -2281,6 +2281,19 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
 
   const saveEdit=async()=>{
     if(!editG)return;
+    // בדיקת כפילות — שם או טלפון
+    const nameClean=editG.name.trim().toLowerCase();
+    const phoneClean=(editG.phone||"").trim().replace(/\D/g,"");
+    const dup=allGuests.find(g=>{
+      if(g.id===editG.id)return false; // אותו אורח
+      const nameMatch=g.name.trim().toLowerCase()===nameClean;
+      const phoneMatch=phoneClean&&g.phone&&g.phone.replace(/\D/g,"")===phoneClean;
+      return nameMatch||phoneMatch;
+    });
+    if(dup){
+      const ok=window.confirm(`קיים אורח דומה: "${dup.name}" (${dup.phone||"ללא טלפון"})\nהאם להמשיך בכל זאת?`);
+      if(!ok)return;
+    }
     setSaving(true);
     await sb.from("guests").update({name:editG.name,phone:editG.phone,rsvp:editG.rsvp,guest_count:editG.guest_count,relation:editG.relation,note:editG.note||""}).eq("id",editG.id);
     await loadAll();
