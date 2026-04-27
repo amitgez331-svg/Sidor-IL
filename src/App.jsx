@@ -1839,10 +1839,20 @@ function SeatingApp({ user, event, onBack }) {
       <main style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
         {view==="map"&&<>
           <div onDragOver={e=>e.preventDefault()}
-            onDrop={e=>{e.preventDefault();const gid=e.dataTransfer.getData("guestId");const f=e.dataTransfer.getData("fromTable");if(gid&&f){const g=tables.flatMap(t=>t.guests||[]).find(x=>String(x.id)===String(gid));if(g)removeFromTable(f,g);}}}
+            onDrop={e=>{
+              e.preventDefault();
+              // רק אם שחררו ישירות על הרקע (לא על שולחן)
+              if(e.target!==e.currentTarget&&!e.target.classList?.contains("map-bg"))return;
+              const gid=e.dataTransfer.getData("guestId");
+              const f=e.dataTransfer.getData("fromTable");
+              if(gid&&f){
+                const g=tables.flatMap(t=>t.guests||[]).find(x=>String(x.id)===String(gid));
+                if(g)removeFromTable(f,g);
+              }
+            }}
             onClick={e=>{if(e.target===e.currentTarget)setSelected(null);}}
             style={{flex:1,overflow:"auto",backgroundImage:`radial-gradient(ellipse at 30% 20%,rgba(74,122,255,.06),transparent 50%),linear-gradient(${C.border}80 1px,transparent 1px),linear-gradient(90deg,${C.border}80 1px,transparent 1px)`,backgroundSize:"auto,40px 40px,40px 40px"}}>
-            <div style={{position:"relative",width:1400,height:900}} onClick={e=>{if(e.target===e.currentTarget)setSelected(null);}}>
+            <div className="map-bg" style={{position:"relative",width:1400,height:900}} onClick={e=>{if(e.target===e.currentTarget)setSelected(null);}}>
               <div style={{position:"absolute",bottom:24,left:"50%",transform:"translateX(-50%)",width:210,height:34,background:`linear-gradient(135deg,${C.blue}18,${C.blueL}12)`,border:`1px solid ${C.blueL}40`,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:C.blue,letterSpacing:".1em",fontWeight:700}}>▲ במה ▲</div>
               {tables.map(t=>{const hmd=e=>{e.stopPropagation();setSelected(t.id);const ox=e.clientX-t.x,oy=e.clientY-t.y;const mv=me=>moveTablePos(t.id,me.clientX-ox,me.clientY-oy);const up=()=>{saveTablePos(t.id,t.x,t.y);window.removeEventListener("mousemove",mv);window.removeEventListener("mouseup",up);};window.addEventListener("mousemove",mv);window.addEventListener("mouseup",up);};return<TableNode key={t.id} table={t} selected={selected===t.id} onMouseDown={hmd} onDrop={e=>{const gid=e.dataTransfer.getData("guestId");const f=e.dataTransfer.getData("fromTable")||null;if(gid)dropOnTable(t.id,gid,f);}}/>;} )}
             </div>
@@ -2274,7 +2284,7 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
   };
 
   return(
-    <div style={{direction:"rtl",padding:"20px 24px"}}>
+    <div style={{direction:"rtl",padding:"20px 16px"}}>
       {/* כותרת */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
         <div>
@@ -2312,67 +2322,70 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
       </div>
 
       {/* טבלה */}
-      <div style={{background:"#fff",borderRadius:14,boxShadow:"0 1px 8px rgba(0,0,0,.06)",overflow:"hidden"}}>
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed"}}>
-        <colgroup>
-            <col style={{width:"18%"}}/><col style={{width:"7%"}}/><col style={{width:"7%"}}/><col style={{width:"13%"}}/><col style={{width:"6%"}}/><col style={{width:"14%"}}/><col style={{width:"10%"}}/><col style={{width:"13%"}}/><col style={{width:"12%"}}/>
-          </colgroup>
+      <div style={{background:"#fff",borderRadius:14,boxShadow:"0 2px 12px rgba(0,0,0,.08)",overflow:"hidden",border:"1.5px solid #E2E8F0"}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
           <thead>
-            <tr style={{background:"#F7FAFC",borderBottom:"2px solid #E2E8F0"}}>
-              {["שם מלא","הוזמנו","אישרו","מס' נייד","שולחן","קרבה","עדכון","הגעה","פעולות"].map(h=>(
-                <th key={h} style={{padding:"11px 8px",textAlign:"right",fontWeight:800,color:"#718096",fontSize:11,whiteSpace:"nowrap"}}>{h}</th>
-              ))}
+            <tr style={{background:"#F0F4FF",borderBottom:"2px solid #C3D3F5"}}>
+              <th style={{padding:"13px 14px",textAlign:"right",fontWeight:800,color:"#2C5282",fontSize:12}}>שם מלא</th>
+              <th style={{padding:"13px 10px",textAlign:"center",fontWeight:800,color:"#2C5282",fontSize:12}}>הוזמנו</th>
+              <th style={{padding:"13px 10px",textAlign:"center",fontWeight:800,color:"#2C5282",fontSize:12}}>אישרו</th>
+              <th style={{padding:"13px 12px",textAlign:"right",fontWeight:800,color:"#2C5282",fontSize:12}}>מס' נייד</th>
+              <th style={{padding:"13px 10px",textAlign:"center",fontWeight:800,color:"#2C5282",fontSize:12}}>שולחן</th>
+              <th style={{padding:"13px 12px",textAlign:"right",fontWeight:800,color:"#2C5282",fontSize:12}}>קרבה</th>
+              <th style={{padding:"13px 10px",textAlign:"center",fontWeight:800,color:"#2C5282",fontSize:12}}>עדכון</th>
+              <th style={{padding:"13px 12px",textAlign:"right",fontWeight:800,color:"#2C5282",fontSize:12}}>הגעה</th>
+              <th style={{padding:"13px 12px",textAlign:"right",fontWeight:800,color:"#2C5282",fontSize:12}}>פעולות</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map(g=>(
-              <tr key={g.id} style={{borderBottom:"1px solid #F7FAFC"}}
-                onMouseEnter={e=>e.currentTarget.style.background="#FAFBFF"}
+              <tr key={g.id} style={{borderBottom:"1px solid #EEF2FF",transition:"background .1s"}}
+                onMouseEnter={e=>e.currentTarget.style.background="#F5F8FF"}
                 onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                <td style={{padding:"8px 6px"}}>
+                <td style={{padding:"12px 14px"}}>
                   <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <div style={{width:10,height:10,borderRadius:"50%",background:RELATION_COLORS[g.relation]||"#CBD5E0",flexShrink:0}}/>
-                    <span style={{fontWeight:700,color:"#1A202C"}}>{g.name}</span>
+                    <div style={{width:11,height:11,borderRadius:"50%",background:RELATION_COLORS[g.relation]||"#CBD5E0",flexShrink:0,boxShadow:`0 0 0 2px ${(RELATION_COLORS[g.relation]||"#CBD5E0")}33`}}/>
+                    <span style={{fontWeight:700,color:"#1A202C",fontSize:14}}>{g.name}</span>
                   </div>
                 </td>
-                <td style={{padding:"8px 6px",textAlign:"center",fontWeight:700}}>{g.guest_count||1}</td>
-                <td style={{padding:"8px 6px",textAlign:"center"}}>
-                  <span style={{fontWeight:900,color:g.rsvp==="confirmed"?"#276749":"#CBD5E0"}}>
+                <td style={{padding:"12px 10px",textAlign:"center",fontWeight:700,fontSize:14,color:"#2D3748"}}>{g.guest_count||1}</td>
+                <td style={{padding:"12px 10px",textAlign:"center"}}>
+                  <span style={{fontWeight:900,fontSize:14,color:g.rsvp==="confirmed"?"#276749":"#CBD5E0"}}>
                     {g.rsvp==="confirmed"?g.guest_count||1:0}
                   </span>
                 </td>
-                <td style={{padding:"8px 6px",color:"#718096",direction:"ltr",textAlign:"right",fontSize:12}}>{g.phone||"—"}</td>
-                <td style={{padding:"8px 6px",textAlign:"center"}}>
-                  {getTableNum(g)?<span style={{background:"#EBF8FF",color:"#2B6CB0",borderRadius:6,padding:"2px 8px",fontWeight:700,fontSize:12}}>{getTableNum(g)}</span>:<span style={{color:"#CBD5E0"}}>—</span>}
+                <td style={{padding:"12px 12px",color:"#4A5568",direction:"ltr",textAlign:"right",fontSize:13,fontWeight:500}}>{g.phone||"—"}</td>
+                <td style={{padding:"12px 10px",textAlign:"center"}}>
+                  {getTableNum(g)?<span style={{background:"#EBF8FF",color:"#2B6CB0",borderRadius:8,padding:"3px 10px",fontWeight:800,fontSize:13}}>{getTableNum(g)}</span>:<span style={{color:"#CBD5E0",fontSize:13}}>—</span>}
                 </td>
-                <td style={{padding:"8px 6px"}}>
-                  {g.relation&&<span style={{display:"inline-flex",alignItems:"center",gap:4,background:RELATION_COLORS[g.relation]+"15",border:`1px solid ${RELATION_COLORS[g.relation]||"#E2E8F0"}33`,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600,color:RELATION_COLORS[g.relation]||"#718096",whiteSpace:"nowrap"}}>
-                    <span style={{width:6,height:6,borderRadius:"50%",background:RELATION_COLORS[g.relation]||"#CBD5E0",display:"inline-block"}}/>
+                <td style={{padding:"12px 12px"}}>
+                  {g.relation&&<span style={{display:"inline-flex",alignItems:"center",gap:5,background:(RELATION_COLORS[g.relation]||"#CBD5E0")+"18",border:`1.5px solid ${(RELATION_COLORS[g.relation]||"#CBD5E0")}44`,borderRadius:20,padding:"3px 11px",fontSize:12,fontWeight:700,color:RELATION_COLORS[g.relation]||"#718096",whiteSpace:"nowrap"}}>
+                    <span style={{width:7,height:7,borderRadius:"50%",background:RELATION_COLORS[g.relation]||"#CBD5E0",display:"inline-block",flexShrink:0}}/>
                     {g.relation}
                   </span>}
                 </td>
-                <td style={{padding:"8px 6px",color:"#718096",fontSize:11,whiteSpace:"nowrap"}}>
+                <td style={{padding:"12px 10px",color:"#718096",fontSize:12,textAlign:"center",whiteSpace:"nowrap"}}>
                   {new Date().toLocaleDateString("he-IL")}
                 </td>
-                <td style={{padding:"8px 6px"}}>
+                <td style={{padding:"12px 12px"}}>
                   <select value={g.rsvp||"pending"} onChange={async e=>await updateRsvp(g,e.target.value)}
                     style={{border:`1.5px solid ${g.rsvp==="confirmed"?"#9AE6B4":g.rsvp==="declined"?"#FEB2B2":"#CBD5E0"}`,
                       background:g.rsvp==="confirmed"?"#F0FFF4":g.rsvp==="declined"?"#FFF5F5":"#F7FAFC",
                       color:g.rsvp==="confirmed"?"#276749":g.rsvp==="declined"?"#C53030":"#718096",
-                      borderRadius:8,padding:"4px 8px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",outline:"none"}}>
+                      borderRadius:8,padding:"5px 8px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",outline:"none",width:"100%"}}>
                     <option value="pending">לא הופצה</option>
                     <option value="confirmed">מגיע/ה ✓</option>
                     <option value="declined">לא מגיע/ה ✗</option>
                   </select>
                 </td>
-                <td style={{padding:"8px 6px"}}>
-                  <div style={{display:"flex",gap:5}}>
+                <td style={{padding:"12px 12px"}}>
+                  <div style={{display:"flex",gap:6}}>
                     <button onClick={()=>setEditG({...g})}
-                      style={{background:"#EBF8FF",color:"#2B6CB0",border:"1.5px solid #BEE3F8",borderRadius:8,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
-                      עריכה מהירה
+                      style={{background:"#EBF8FF",color:"#2B6CB0",border:"1.5px solid #BEE3F8",borderRadius:8,padding:"5px 12px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
+                      ✏️ עריכה
                     </button>
                     <button onClick={()=>deleteGuest(g)}
-                      style={{background:"#FFF5F5",color:"#C53030",border:"1.5px solid #FED7D7",borderRadius:8,padding:"4px 7px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>
+                      style={{background:"#FFF5F5",color:"#C53030",border:"1.5px solid #FED7D7",borderRadius:8,padding:"5px 8px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
                       🗑️
                     </button>
                   </div>
