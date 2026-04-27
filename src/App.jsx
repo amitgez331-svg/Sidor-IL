@@ -518,9 +518,9 @@ function LandingPage({ onOpenAuth, onLogout }) {
               מערכת ניהול אירועים מתקדמת
               <div style={{width:32,height:3,background:C.blue,borderRadius:2}}/>
             </div>
-            <h1 style={{fontFamily:"'Heebo',sans-serif",fontSize:"clamp(42px,5vw,72px)",fontWeight:900,lineHeight:1.05,color:C.text,marginBottom:20,letterSpacing:"-.02em",display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
+            <h1 style={{fontFamily:"'Heebo',sans-serif",fontSize:"clamp(42px,5vw,72px)",fontWeight:900,lineHeight:1.05,color:C.text,marginBottom:20,letterSpacing:"-.02em",display:"flex",alignItems:"center",gap:2,direction:"ltr",justifyContent:"flex-end"}}>
               <span style={{color:C.blue}}>Sid</span>
-              <svg width="52" height="52" viewBox="0 0 52 52" fill="none" style={{marginBottom:-4,marginLeft:-2,marginRight:-2}}>
+              <svg width="52" height="52" viewBox="0 0 52 52" fill="none" style={{marginBottom:-4}}>
                 <circle cx="26" cy="26" r="24" fill={`url(#hg)`}/>
                 <defs><radialGradient id="hg" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#4A7AFF"/><stop offset="100%" stopColor="#1B3A8C"/></radialGradient></defs>
                 <circle cx="26" cy="26" r="12" fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"/>
