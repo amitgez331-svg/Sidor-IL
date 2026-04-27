@@ -1232,7 +1232,28 @@ function SeatingApp({ user, event, onBack }) {
   const loadAll=async()=>{setLoading(true);const [{data:tData},{data:gData},{data:pkgData}]=await Promise.all([sb.from("tables").select("*").eq("event_id",event.id).order("created_at"),sb.from("guests").select("*").eq("event_id",event.id).order("created_at"),sb.from("user_packages").select("package_id").eq("user_id",user.id)]);setTables((tData||[]).map(t=>({...t,guests:(gData||[]).filter(g=>g.table_id===t.id)})));setGuests((gData||[]).filter(g=>!g.table_id));setUserPackages((pkgData||[]).map(p=>p.package_id));setLoading(false);};
   const moveTablePos=useCallback((id,x,y)=>setTables(ts=>ts.map(t=>t.id===id?{...t,x:Math.max(0,x),y:Math.max(0,y)}:t)),[]);
   const saveTablePos=async(id,x,y)=>await sb.from("tables").update({x,y}).eq("id",id);
-  const dropOnTable=async(toId,guestId,fromId)=>{const allG=[...guests,...tables.flatMap(t=>t.guests||[])];const guest=allG.find(g=>String(g.id)===String(guestId));const toTable=tables.find(t=>t.id===toId);if(!guest||!toTable||(toTable.guests||[]).length>=toTable.seats)return;setSaving(true);await sb.from("guests").update({table_id:toId}).eq("id",guestId);setTables(ts=>ts.map(t=>{if(t.id===fromId)return{...t,guests:(t.guests||[]).filter(g=>String(g.id)!==String(guestId))};if(t.id===toId)return{...t,guests:[...(t.guests||[]),{...guest,table_id:toId}]};return t;}));setGuests(gs=>gs.filter(g=>String(g.id)!==String(guestId)));setSaving(false);};
+  const dropOnTable=async(toId,guestId,fromId)=>{
+    const allG=[...guests,...tables.flatMap(t=>t.guests||[])];
+    const guest=allG.find(g=>String(g.id)===String(guestId));
+    const toTable=tables.find(t=>String(t.id)===String(toId));
+    if(!guest||!toTable)return;
+    // בדוק שהשולחן לא מלא (אלא אם זה אותו שולחן)
+    if(String(fromId)!==String(toId)&&(toTable.guests||[]).length>=toTable.seats)return;
+    // אותו שולחן — אל תעשה כלום
+    if(String(fromId)===String(toId))return;
+    setSaving(true);
+    await sb.from("guests").update({table_id:toId}).eq("id",guestId);
+    setTables(ts=>ts.map(t=>{
+      // הסר מהשולחן הקודם
+      if(fromId&&String(t.id)===String(fromId))return{...t,guests:(t.guests||[]).filter(g=>String(g.id)!==String(guestId))};
+      // הוסף לשולחן החדש
+      if(String(t.id)===String(toId))return{...t,guests:[...(t.guests||[]).filter(g=>String(g.id)!==String(guestId)),{...guest,table_id:toId}]};
+      return t;
+    }));
+    // הסר מרשימת הממתינים
+    setGuests(gs=>gs.filter(g=>String(g.id)!==String(guestId)));
+    setSaving(false);
+  };
   const removeFromTable=async(tid,guest)=>{setSaving(true);await sb.from("guests").update({table_id:null}).eq("id",guest.id);setTables(ts=>ts.map(t=>t.id===tid?{...t,guests:(t.guests||[]).filter(g=>g.id!==guest.id)}:t));setGuests(gs=>{const already=gs.some(g=>g.id===guest.id);return already?gs:[...gs,{...guest,table_id:null}];});setSaving(false);};
   const editTable=async(id,name,type,seats)=>{setSaving(true);await sb.from("tables").update({name,type,seats}).eq("id",id);setTables(ts=>ts.map(t=>t.id===id?{...t,name,type,seats}:t));setSaving(false);};
   const deleteTable=async(id)=>{setSaving(true);await sb.from("guests").update({table_id:null}).eq("table_id",id);await sb.from("tables").delete().eq("id",id);const freed=tables.find(t=>t.id===id)?.guests||[];setTables(ts=>ts.filter(t=>t.id!==id));setGuests(gs=>[...gs,...freed.map(g=>({...g,table_id:null}))]);setSaving(false);};
@@ -1840,15 +1861,10 @@ function SeatingApp({ user, event, onBack }) {
         {view==="map"&&<>
           <div onDragOver={e=>e.preventDefault()}
             onDrop={e=>{
+              // רק אם שחררו ישירות על הרקע הריק — לא על שולחן
+              if(e.defaultPrevented)return;
               e.preventDefault();
-              // רק אם שחררו ישירות על הרקע (לא על שולחן)
-              if(e.target!==e.currentTarget&&!e.target.classList?.contains("map-bg"))return;
-              const gid=e.dataTransfer.getData("guestId");
-              const f=e.dataTransfer.getData("fromTable");
-              if(gid&&f){
-                const g=tables.flatMap(t=>t.guests||[]).find(x=>String(x.id)===String(gid));
-                if(g)removeFromTable(f,g);
-              }
+              // אל תעשה כלום — גרירה לרקע לא מסירה אורחים
             }}
             onClick={e=>{if(e.target===e.currentTarget)setSelected(null);}}
             style={{flex:1,overflow:"auto",backgroundImage:`radial-gradient(ellipse at 30% 20%,rgba(74,122,255,.06),transparent 50%),linear-gradient(${C.border}80 1px,transparent 1px),linear-gradient(90deg,${C.border}80 1px,transparent 1px)`,backgroundSize:"auto,40px 40px,40px 40px"}}>
@@ -2283,6 +2299,12 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
     return t?tables.indexOf(t)+1:null;
   };
 
+  const [showCats,setShowCats]=useState(false);
+  const [customCats,setCustomCats]=useState({...RELATION_COLORS});
+  const [newCatName,setNewCatName]=useState("");
+  const [newCatColor,setNewCatColor]=useState("#E53E3E");
+  const CAT_COLORS=["#E53E3E","#DD6B20","#38A169","#3182CE","#805AD5","#D69E2E","#D53F8C","#319795","#744210","#2C7A7B"];
+
   return(
     <div style={{direction:"rtl",padding:"20px 16px"}}>
       {/* כותרת */}
@@ -2291,11 +2313,57 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
           <div style={{fontSize:20,fontWeight:900,color:"#1A202C"}}>אישורי הגעה</div>
           <div style={{fontSize:13,color:"#718096"}}>טבלת ניהול מוזמנים לאירוע</div>
         </div>
-        <button onClick={onAddGuest}
-          style={{background:"#2B6CB0",color:"#fff",border:"none",borderRadius:10,padding:"9px 18px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>
-          ➕ הוסף מוזמן/ת
-        </button>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={()=>setShowCats(s=>!s)}
+            style={{background:showCats?"#EBF8FF":"#fff",color:"#2B6CB0",border:"1.5px solid #BEE3F8",borderRadius:10,padding:"9px 16px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>
+            🏷️ קטגוריות
+          </button>
+          <button onClick={onAddGuest}
+            style={{background:"#2B6CB0",color:"#fff",border:"none",borderRadius:10,padding:"9px 18px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>
+            ➕ הוסף מוזמן/ת
+          </button>
+        </div>
       </div>
+
+      {/* פאנל קטגוריות */}
+      {showCats&&(
+        <div style={{background:"#fff",border:"1.5px solid #E2E8F0",borderRadius:14,padding:20,marginBottom:16,boxShadow:"0 2px 12px rgba(0,0,0,.06)"}}>
+          <div style={{fontSize:15,fontWeight:800,color:"#1A202C",marginBottom:14}}>🏷️ ניהול קטגוריות קרבה</div>
+          {/* קטגוריות קיימות */}
+          <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>
+            {Object.entries(customCats).map(([name,color])=>(
+              <div key={name} style={{display:"flex",alignItems:"center",gap:6,background:color+"15",border:`1.5px solid ${color}44`,borderRadius:20,padding:"5px 12px"}}>
+                <div style={{width:10,height:10,borderRadius:"50%",background:color,flexShrink:0}}/>
+                <span style={{fontSize:13,fontWeight:700,color:color}}>{name}</span>
+                <button onClick={()=>{const c={...customCats};delete c[name];setCustomCats(c);delete RELATION_COLORS[name];}}
+                  style={{background:"none",border:"none",cursor:"pointer",color:"#aaa",fontSize:14,padding:0,lineHeight:1,marginRight:2}}>×</button>
+              </div>
+            ))}
+          </div>
+          {/* הוספת קטגוריה */}
+          <div style={{borderTop:"1px solid #F0F0F0",paddingTop:14}}>
+            <div style={{fontSize:12,fontWeight:700,color:"#718096",marginBottom:8}}>הוסף קטגוריה חדשה:</div>
+            <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+              <input value={newCatName} onChange={e=>setNewCatName(e.target.value)} placeholder="שם הקטגוריה..."
+                style={{border:"1.5px solid #E2E8F0",borderRadius:8,padding:"8px 12px",fontSize:13,outline:"none",fontFamily:"inherit",flex:1,minWidth:150}}/>
+              <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                {CAT_COLORS.map(c=>(
+                  <div key={c} onClick={()=>setNewCatColor(c)}
+                    style={{width:22,height:22,borderRadius:"50%",background:c,cursor:"pointer",border:`3px solid ${newCatColor===c?"#1A202C":"transparent"}`,transition:"border .1s"}}/>
+                ))}
+              </div>
+              <button onClick={()=>{
+                if(!newCatName.trim())return;
+                RELATION_COLORS[newCatName.trim()]=newCatColor;
+                setCustomCats(c=>({...c,[newCatName.trim()]:newCatColor}));
+                setNewCatName("");
+              }} style={{background:"#2B6CB0",color:"#fff",border:"none",borderRadius:8,padding:"8px 16px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
+                + הוסף
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* סטטיסטיקות */}
       <div style={{display:"flex",gap:10,marginBottom:16}}>
