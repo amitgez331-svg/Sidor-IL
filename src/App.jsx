@@ -1739,7 +1739,7 @@ function SeatingApp({ user, event, onBack }) {
       )}
 
       {/* תוכן ראשי */}
-      <div style={{flex:1,overflow:"auto",display:"flex",flexDirection:"column"}}>
+      <div style={{flex:1,overflow:"auto",display:"flex",flexDirection:"column",minWidth:0}}>
 
       {screen==="home"&&(
       <div style={{flex:1,overflowY:"auto",padding:"24px 28px",direction:"rtl",background:"#F4F1EC"}}>
@@ -1820,7 +1820,7 @@ function SeatingApp({ user, event, onBack }) {
             <div style={{fontSize:12,color:"#999",marginBottom:20}}>שתפו את ההזמנה עם האורחים</div>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20,background:"#F7FAFC",borderRadius:10,padding:"12px 16px"}}>
               <span style={{fontSize:22}}>👁</span>
-              <span style={{fontSize:28,fontWeight:900,color:"#1A202C"}}>0</span>
+              <span style={{fontSize:28,fontWeight:900,color:"#1A202C"}}>{event.views||0}</span>
               <span style={{fontSize:13,color:"#999"}}>צפיות בהזמנה</span>
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -2134,6 +2134,11 @@ function SeatingApp({ user, event, onBack }) {
     {modal==="addGuest"&&<GuestModal eventId={event.id} onClose={()=>setModal(null)} existingGuests={[...guests,...tables.flatMap(t=>t.guests||[])]} onSave={async(data)=>{await addGuest(data);setModal(null);}} desktop={true}/>}
     {modal==="receipt"&&<ReceiptModal tables={tables} onClose={()=>setModal(null)}/>}
     {modal==="addTable"&&<AddTableModal onConfirm={doAddTable} onClose={()=>setModal(null)}/>}
+    {/* WhatsApp צף */}
+    <a href="https://wa.me/972526817102" target="_blank" rel="noopener"
+      style={{position:"fixed",bottom:90,left:24,background:"#25D366",color:"#fff",borderRadius:"50%",width:52,height:52,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 20px rgba(37,211,102,.5)",zIndex:200,textDecoration:"none"}}>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    </a>
     <AccessibilityWidget/>
       </div>{/* end main content */}
     </div>{/* end flex row */}
@@ -2450,7 +2455,7 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
   const CAT_COLORS=["#E53E3E","#DD6B20","#38A169","#3182CE","#805AD5","#D69E2E","#D53F8C","#319795","#744210","#2C7A7B"];
 
   return(
-    <div style={{direction:"rtl",padding:"16px 4px"}}>
+    <div style={{direction:"rtl",padding:"16px 0"}}>
       {/* כותרת */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
         <div>
@@ -2574,25 +2579,12 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
       </div>
 
       {/* טבלה */}
-      <div style={{background:"#fff",borderRadius:14,boxShadow:"0 2px 16px rgba(0,0,0,.1)",overflow:"hidden",border:"2px solid #C3D3F5",width:"100%"}}>
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,tableLayout:"fixed"}}>
-          <colgroup>
-            <col style={{width:"18%"}}/>
-            <col style={{width:"6%"}}/>
-            <col style={{width:"6%"}}/>
-            <col style={{width:"12%"}}/>
-            <col style={{width:"6%"}}/>
-            <col style={{width:"14%"}}/>
-            <col style={{width:"7%"}}/>
-            <col style={{width:"11%"}}/>
-            <col style={{width:"4%"}}/>
-            <col style={{width:"10%"}}/>
-            <col style={{width:"6%"}}/>
-          </colgroup>
+      <div style={{background:"#fff",boxShadow:"0 2px 16px rgba(0,0,0,.08)",overflow:"hidden",borderTop:"2px solid #C3D3F5",borderBottom:"2px solid #C3D3F5",width:"100%"}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
           <thead>
             <tr style={{background:"#1B3A8C",borderBottom:"3px solid #122e70"}}>
               {["שם מלא","הוזמנו","אישרו","מס' נייד","שולחן","קרבה","מתנה","עדכון אחרון","👁","הגעה","פעולות"].map((h,i)=>(
-                <th key={h} style={{padding:"11px "+(i===0?"12px":"6px"),textAlign:i===0||i===5?"right":"center",fontWeight:800,color:"#fff",fontSize:11,borderRight:i>0?"1px solid rgba(255,255,255,.15)":"none",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                <th key={h} style={{padding:"13px "+(i===0?"16px":"10px"),textAlign:i===0||i===5?"right":"center",fontWeight:800,color:"#fff",fontSize:13,borderRight:i>0?"1px solid rgba(255,255,255,.15)":"none",whiteSpace:"nowrap"}}>
                   {h}
                 </th>
               ))}
@@ -2615,16 +2607,16 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
                 {/* שם */}
                 <td style={{padding:"11px 12px",borderRight:"1px solid #E2E8F0",overflow:"hidden"}}>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    <div style={{width:30,height:30,borderRadius:"50%",background:relColor||"#CBD5E0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:"#fff",flexShrink:0}}>{g.name[0]}</div>
+                    <div style={{width:30,height:30,borderRadius:"50%",background:relColor||"#CBD5E0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,color:"#fff",flexShrink:0}}>{g.name[0]}</div>
                     <span style={{fontWeight:700,color:"#1A202C",fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</span>
                   </div>
                 </td>
                 <td style={{padding:"11px 8px",textAlign:"center",fontWeight:800,fontSize:13,color:"#2D3748",borderRight:"1px solid #E2E8F0"}}>{g.guest_count||1}</td>
-                <td style={{padding:"9px 6px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
+                <td style={{padding:"12px 10px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
                   <span style={{fontWeight:900,fontSize:13,color:g.rsvp==="confirmed"?"#276749":"#CBD5E0"}}>{g.rsvp==="confirmed"?g.guest_count||1:0}</span>
                 </td>
                 <td style={{padding:"11px 8px",color:"#4A5568",direction:"ltr",textAlign:"right",fontSize:12,fontWeight:600,borderRight:"1px solid #E2E8F0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.phone||"—"}</td>
-                <td style={{padding:"9px 6px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
+                <td style={{padding:"12px 10px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
                   {getTableNum(g)?<span style={{background:"#1B3A8C",color:"#fff",borderRadius:5,padding:"2px 7px",fontWeight:800,fontSize:12}}>{getTableNum(g)}</span>:<span style={{color:"#CBD5E0"}}>—</span>}
                 </td>
                 <td style={{padding:"11px 8px",borderRight:"1px solid #E2E8F0",overflow:"hidden"}}>
@@ -2632,11 +2624,11 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
                     <span style={{width:5,height:5,borderRadius:"50%",background:relColor||"#CBD5E0",display:"inline-block",flexShrink:0}}/>{g.relation}
                   </span>}
                 </td>
-                <td style={{padding:"9px 6px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
+                <td style={{padding:"12px 10px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
                   {g.gift&&g.gift>0?<span style={{background:"#FFFFF0",color:"#B7791F",border:"1.5px solid #FAF089",borderRadius:5,padding:"2px 6px",fontWeight:800,fontSize:12}}>₪{g.gift}</span>:<span style={{color:"#CBD5E0",fontSize:10}}>—</span>}
                 </td>
                 <td style={{padding:"11px 8px",color:"#718096",fontSize:11,textAlign:"center",whiteSpace:"nowrap",borderRight:"1px solid #E2E8F0",overflow:"hidden",textOverflow:"ellipsis"}}>{dateStr}</td>
-                <td style={{padding:"9px 6px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
+                <td style={{padding:"12px 10px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
                   <span style={{color:"#718096",fontSize:11}}>{g.views||0}</span>
                 </td>
                 <td style={{padding:"11px 6px",borderRight:"1px solid #E2E8F0"}}>
@@ -3730,7 +3722,13 @@ function InvitePage({ code }) {
 
   useEffect(()=>{
     sb.from("events").select("*").eq("invite_code",code).eq("invite_active",true).single()
-      .then(({data})=>{setEvent(data||null);setLoading(false);});
+      .then(({data})=>{
+        setEvent(data||null);setLoading(false);
+        // עדכן צפיות
+        if(data){
+          sb.from("events").update({views:(data.views||0)+1}).eq("id",data.id);
+        }
+      });
   },[code]);
 
   const doInsert=async()=>{
