@@ -2281,11 +2281,10 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
 
   const saveEdit=async()=>{
     if(!editG)return;
-    // בדיקת כפילות — שם או טלפון
     const nameClean=editG.name.trim().toLowerCase();
     const phoneClean=(editG.phone||"").trim().replace(/\D/g,"");
     const dup=allGuests.find(g=>{
-      if(g.id===editG.id)return false; // אותו אורח
+      if(g.id===editG.id)return false;
       const nameMatch=g.name.trim().toLowerCase()===nameClean;
       const phoneMatch=phoneClean&&g.phone&&g.phone.replace(/\D/g,"")===phoneClean;
       return nameMatch||phoneMatch;
@@ -2295,7 +2294,27 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
       if(!ok)return;
     }
     setSaving(true);
-    await sb.from("guests").update({name:editG.name,phone:editG.phone,rsvp:editG.rsvp,guest_count:editG.guest_count,relation:editG.relation,note:editG.note||""}).eq("id",editG.id);
+    const oldGift=allGuests.find(g=>g.id===editG.id)?.gift||0;
+    const newGift=Number(editG.gift||0);
+    await sb.from("guests").update({
+      name:editG.name,phone:editG.phone,rsvp:editG.rsvp,
+      guest_count:editG.guest_count,relation:editG.relation,
+      note:editG.note||"",gift:newGift
+    }).eq("id",editG.id);
+    // סנכרון מתנה לניהול תקציב
+    if(newGift!==oldGift){
+      const budgetName=`מתנה — ${editG.name}`;
+      const{data:existing}=await sb.from("budget_items").select("id").eq("event_id",event.id).eq("name",budgetName).single();
+      if(newGift>0){
+        if(existing){
+          await sb.from("budget_items").update({amount:newGift}).eq("id",existing.id);
+        }else{
+          await sb.from("budget_items").insert({name:budgetName,amount:newGift,advance:newGift,type:"income",category:"מתנות",event_id:event.id});
+        }
+      }else if(existing){
+        await sb.from("budget_items").delete().eq("id",existing.id);
+      }
+    }
     await loadAll();
     setSaving(false);setEditG(null);
   };
@@ -2444,77 +2463,86 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
       </div>
 
       {/* טבלה */}
-      <div style={{background:"#fff",borderRadius:14,boxShadow:"0 2px 16px rgba(0,0,0,.1)",overflow:"hidden",border:"2px solid #C3D3F5"}}>
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
+      <div style={{background:"#fff",borderRadius:14,boxShadow:"0 2px 16px rgba(0,0,0,.1)",overflow:"hidden",border:"2px solid #C3D3F5",width:"100%"}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed"}}>
+          <colgroup>
+            <col style={{width:"16%"}}/>
+            <col style={{width:"6%"}}/>
+            <col style={{width:"6%"}}/>
+            <col style={{width:"11%"}}/>
+            <col style={{width:"6%"}}/>
+            <col style={{width:"13%"}}/>
+            <col style={{width:"7%"}}/>
+            <col style={{width:"12%"}}/>
+            <col style={{width:"5%"}}/>
+            <col style={{width:"12%"}}/>
+            <col style={{width:"6%"}}/>
+          </colgroup>
           <thead>
             <tr style={{background:"#1B3A8C",borderBottom:"3px solid #122e70"}}>
-              <th style={{padding:"14px 16px",textAlign:"right",fontWeight:800,color:"#fff",fontSize:13}}>שם מלא</th>
-              <th style={{padding:"14px 10px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:13,borderRight:"1px solid rgba(255,255,255,.15)"}}>הוזמנו</th>
-              <th style={{padding:"14px 10px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:13,borderRight:"1px solid rgba(255,255,255,.15)"}}>אישרו</th>
-              <th style={{padding:"14px 14px",textAlign:"right",fontWeight:800,color:"#fff",fontSize:13,borderRight:"1px solid rgba(255,255,255,.15)"}}>מס' נייד</th>
-              <th style={{padding:"14px 10px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:13,borderRight:"1px solid rgba(255,255,255,.15)"}}>שולחן</th>
-              <th style={{padding:"14px 14px",textAlign:"right",fontWeight:800,color:"#fff",fontSize:13,borderRight:"1px solid rgba(255,255,255,.15)"}}>קרבה</th>
-              <th style={{padding:"14px 10px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:13,borderRight:"1px solid rgba(255,255,255,.15)"}}>עדכון</th>
-              <th style={{padding:"14px 14px",textAlign:"right",fontWeight:800,color:"#fff",fontSize:13,borderRight:"1px solid rgba(255,255,255,.15)"}}>הגעה</th>
-              <th style={{padding:"14px 14px",textAlign:"right",fontWeight:800,color:"#fff",fontSize:13,borderRight:"1px solid rgba(255,255,255,.15)"}}>פעולות</th>
+              {["שם מלא","הוזמנו","אישרו","מס' נייד","שולחן","קרבה","מתנה","עדכון אחרון","👁","הגעה","פעולות"].map((h,i)=>(
+                <th key={h} style={{padding:"11px "+(i===0?"12px":"6px"),textAlign:i===0||i===5?"right":"center",fontWeight:800,color:"#fff",fontSize:11,borderRight:i>0?"1px solid rgba(255,255,255,.15)":"none",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {filtered.map((g,idx)=>{
+            {filtered.length===0&&<tr><td colSpan={11} style={{padding:32,textAlign:"center",color:"#aaa"}}>אין אורחים</td></tr>}
+            {filtered.map((g)=>{
               const relColor=RELATION_COLORS[g.relation];
               const rowBg=relColor?relColor+"18":"#fff";
+              const updatedAt=g.updated_at||g.created_at;
+              const dateStr=updatedAt?
+                new Date(updatedAt).toLocaleDateString("he-IL",{day:"2-digit",month:"2-digit",year:"numeric"})
+                +" | "+new Date(updatedAt).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})
+                :"—";
               return(
               <tr key={g.id} style={{borderBottom:"2px solid #E2E8F0",background:rowBg,transition:"filter .1s"}}
                 onMouseEnter={e=>e.currentTarget.style.filter="brightness(.96)"}
                 onMouseLeave={e=>e.currentTarget.style.filter="none"}>
-                <td style={{padding:"13px 16px",borderRight:"1px solid #E2E8F0"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:10}}>
-                    <div style={{width:34,height:34,borderRadius:"50%",background:relColor||"#CBD5E0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:"#fff",flexShrink:0,boxShadow:`0 2px 6px ${relColor||"#CBD5E0"}66`}}>
-                      {g.name[0]}
-                    </div>
-                    <span style={{fontWeight:800,color:"#1A202C",fontSize:15}}>{g.name}</span>
+                {/* שם */}
+                <td style={{padding:"9px 10px",borderRight:"1px solid #E2E8F0",overflow:"hidden"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <div style={{width:26,height:26,borderRadius:"50%",background:relColor||"#CBD5E0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:"#fff",flexShrink:0}}>{g.name[0]}</div>
+                    <span style={{fontWeight:700,color:"#1A202C",fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</span>
                   </div>
                 </td>
-                <td style={{padding:"13px 10px",textAlign:"center",fontWeight:800,fontSize:15,color:"#2D3748",borderRight:"1px solid #E2E8F0"}}>{g.guest_count||1}</td>
-                <td style={{padding:"13px 10px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
-                  <span style={{fontWeight:900,fontSize:15,color:g.rsvp==="confirmed"?"#276749":"#CBD5E0"}}>
-                    {g.rsvp==="confirmed"?g.guest_count||1:0}
-                  </span>
+                <td style={{padding:"9px 6px",textAlign:"center",fontWeight:800,fontSize:12,color:"#2D3748",borderRight:"1px solid #E2E8F0"}}>{g.guest_count||1}</td>
+                <td style={{padding:"9px 6px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
+                  <span style={{fontWeight:900,fontSize:12,color:g.rsvp==="confirmed"?"#276749":"#CBD5E0"}}>{g.rsvp==="confirmed"?g.guest_count||1:0}</span>
                 </td>
-                <td style={{padding:"13px 14px",color:"#4A5568",direction:"ltr",textAlign:"right",fontSize:13,fontWeight:600,borderRight:"1px solid #E2E8F0"}}>{g.phone||"—"}</td>
-                <td style={{padding:"13px 10px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
-                  {getTableNum(g)?<span style={{background:"#1B3A8C",color:"#fff",borderRadius:8,padding:"4px 12px",fontWeight:800,fontSize:13}}>{getTableNum(g)}</span>:<span style={{color:"#CBD5E0",fontSize:13}}>—</span>}
+                <td style={{padding:"9px 6px",color:"#4A5568",direction:"ltr",textAlign:"right",fontSize:11,fontWeight:600,borderRight:"1px solid #E2E8F0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.phone||"—"}</td>
+                <td style={{padding:"9px 6px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
+                  {getTableNum(g)?<span style={{background:"#1B3A8C",color:"#fff",borderRadius:5,padding:"2px 7px",fontWeight:800,fontSize:11}}>{getTableNum(g)}</span>:<span style={{color:"#CBD5E0"}}>—</span>}
                 </td>
-                <td style={{padding:"13px 14px",borderRight:"1px solid #E2E8F0"}}>
-                  {g.relation&&<span style={{display:"inline-flex",alignItems:"center",gap:5,background:(relColor||"#CBD5E0")+"25",border:`2px solid ${relColor||"#CBD5E0"}66`,borderRadius:20,padding:"4px 12px",fontSize:12,fontWeight:700,color:relColor||"#718096",whiteSpace:"nowrap"}}>
-                    <span style={{width:8,height:8,borderRadius:"50%",background:relColor||"#CBD5E0",display:"inline-block",flexShrink:0}}/>
-                    {g.relation}
+                <td style={{padding:"9px 6px",borderRight:"1px solid #E2E8F0",overflow:"hidden"}}>
+                  {g.relation&&<span style={{display:"inline-flex",alignItems:"center",gap:3,background:(relColor||"#CBD5E0")+"25",border:`1.5px solid ${relColor||"#CBD5E0"}66`,borderRadius:20,padding:"2px 7px",fontSize:10,fontWeight:700,color:relColor||"#718096",whiteSpace:"nowrap"}}>
+                    <span style={{width:5,height:5,borderRadius:"50%",background:relColor||"#CBD5E0",display:"inline-block",flexShrink:0}}/>{g.relation}
                   </span>}
                 </td>
-                <td style={{padding:"13px 10px",color:"#718096",fontSize:12,textAlign:"center",whiteSpace:"nowrap",borderRight:"1px solid #E2E8F0"}}>
-                  {new Date().toLocaleDateString("he-IL")}
+                <td style={{padding:"9px 6px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
+                  {g.gift&&g.gift>0?<span style={{background:"#FFFFF0",color:"#B7791F",border:"1.5px solid #FAF089",borderRadius:5,padding:"2px 6px",fontWeight:800,fontSize:10}}>₪{g.gift}</span>:<span style={{color:"#CBD5E0",fontSize:10}}>—</span>}
                 </td>
-                <td style={{padding:"13px 14px",borderRight:"1px solid #E2E8F0"}}>
+                <td style={{padding:"9px 6px",color:"#718096",fontSize:10,textAlign:"center",whiteSpace:"nowrap",borderRight:"1px solid #E2E8F0",overflow:"hidden",textOverflow:"ellipsis"}}>{dateStr}</td>
+                <td style={{padding:"9px 6px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
+                  <span style={{color:"#718096",fontSize:11}}>{g.views||0}</span>
+                </td>
+                <td style={{padding:"9px 4px",borderRight:"1px solid #E2E8F0"}}>
                   <select value={g.rsvp||"pending"} onChange={async e=>await updateRsvp(g,e.target.value)}
-                    style={{border:`2px solid ${g.rsvp==="confirmed"?"#9AE6B4":g.rsvp==="declined"?"#FEB2B2":"#CBD5E0"}`,
+                    style={{border:`1.5px solid ${g.rsvp==="confirmed"?"#9AE6B4":g.rsvp==="declined"?"#FEB2B2":"#CBD5E0"}`,
                       background:g.rsvp==="confirmed"?"#F0FFF4":g.rsvp==="declined"?"#FFF5F5":"#F7FAFC",
                       color:g.rsvp==="confirmed"?"#276749":g.rsvp==="declined"?"#C53030":"#718096",
-                      borderRadius:8,padding:"6px 10px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",outline:"none",width:"100%"}}>
+                      borderRadius:6,padding:"4px 3px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",outline:"none",width:"100%"}}>
                     <option value="pending">לא הופצה</option>
                     <option value="confirmed">מגיע/ה ✓</option>
                     <option value="declined">לא מגיע/ה ✗</option>
                   </select>
                 </td>
-                <td style={{padding:"13px 14px"}}>
-                  <div style={{display:"flex",gap:6}}>
-                    <button onClick={()=>setEditG({...g})}
-                      style={{background:"#EBF8FF",color:"#2B6CB0",border:"2px solid #BEE3F8",borderRadius:8,padding:"6px 14px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
-                      ✏️ עריכה
-                    </button>
-                    <button onClick={()=>deleteGuest(g)}
-                      style={{background:"#FFF5F5",color:"#C53030",border:"2px solid #FED7D7",borderRadius:8,padding:"6px 10px",fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
-                      🗑️
-                    </button>
+                <td style={{padding:"9px 4px"}}>
+                  <div style={{display:"flex",gap:3}}>
+                    <button onClick={()=>setEditG({...g})} style={{background:"#EBF8FF",color:"#2B6CB0",border:"1.5px solid #BEE3F8",borderRadius:5,padding:"4px 7px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>✏️</button>
+                    <button onClick={()=>deleteGuest(g)} style={{background:"#FFF5F5",color:"#C53030",border:"1.5px solid #FED7D7",borderRadius:5,padding:"4px 5px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>🗑️</button>
                   </div>
                 </td>
               </tr>
@@ -2594,7 +2622,7 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
             </div>
 
             {/* מצב הגעה */}
-            <div style={{marginBottom:20}}>
+            <div style={{marginBottom:16}}>
               <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:8}}>מצב הגעה:</div>
               <select value={editG.rsvp||"pending"} onChange={e=>setEditG(g=>({...g,rsvp:e.target.value}))}
                 style={{width:"100%",border:"1.5px solid #E2E8F0",borderRadius:10,padding:"10px 14px",fontSize:14,fontFamily:"inherit",outline:"none",background:"#fff"}}>
@@ -2602,6 +2630,20 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
                 <option value="confirmed">מגיע/ה</option>
                 <option value="declined">לא מגיע/ה</option>
               </select>
+            </div>
+
+            {/* מתנה + הערה */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+              <div>
+                <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:6}}>מתנה ₪</div>
+                <input type="number" value={editG.gift||0} onChange={e=>setEditG(g=>({...g,gift:e.target.value}))} min={0}
+                  style={{width:"100%",border:"1.5px solid #E2E8F0",borderRadius:10,padding:"10px 12px",fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+              </div>
+              <div>
+                <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:6}}>הערה</div>
+                <input value={editG.note||""} onChange={e=>setEditG(g=>({...g,note:e.target.value}))} placeholder="הערה..."
+                  style={{width:"100%",border:"1.5px solid #E2E8F0",borderRadius:10,padding:"10px 12px",fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+              </div>
             </div>
 
             <div style={{display:"flex",gap:10}}>
