@@ -3544,14 +3544,34 @@ ${instructions}
 שבץ כל אורח לשולחן מתאים לפי ההנחיות. שים לב לא לחרוג ממספר המקומות.`;
 
     try{
-      const res=await sb.functions.invoke("ai-seating",{body:{prompt}});
-      if(res.error){
-        // נסה לקרוא את פרטי השגיאה
-        const errMsg=typeof res.error==="object"?JSON.stringify(res.error):res.error.message||String(res.error);
-        throw new Error(errMsg);
+      // קריאה ישירה ל-Anthropic
+      const apiKey=import.meta.env.VITE_ANTHROPIC_KEY;
+      if(!apiKey){
+        throw new Error("חסר API Key — הוסף VITE_ANTHROPIC_KEY ב-Vercel Environment Variables");
       }
-      if(!res.data)throw new Error("לא התקבל מידע מהשרת");
-      const parsed=typeof res.data==="string"?JSON.parse(res.data):res.data;
+      const res=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "x-api-key":apiKey,
+          "anthropic-version":"2023-06-01",
+          "anthropic-dangerous-direct-browser-access":"true"
+        },
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:2000,
+          system:"אתה עוזר לסידורי הושבה. החזר JSON תקני בלבד ללא טקסט נוסף.",
+          messages:[{role:"user",content:prompt}]
+        })
+      });
+      if(!res.ok){
+        const e=await res.json().catch(()=>({}));
+        throw new Error(e?.error?.message||`שגיאת שרת ${res.status}`);
+      }
+      const data=await res.json();
+      const text=data.content?.[0]?.text||"";
+      const clean=text.replace(/```json\n?|```/g,"").trim();
+      const parsed=JSON.parse(clean);
       setResult(parsed);
     }catch(e){
       setError(`שגיאה: ${e.message||"נסה שוב"}`);
