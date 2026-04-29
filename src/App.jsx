@@ -3544,25 +3544,9 @@ ${instructions}
 שבץ כל אורח לשולחן מתאים לפי ההנחיות. שים לב לא לחרוג ממספר המקומות.`;
 
     try{
-      const res=await fetch("https://api.anthropic.com/v1/messages",{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          "anthropic-dangerous-direct-browser-access":"true",
-          "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY||""
-        },
-        body:JSON.stringify({
-          model:"claude-sonnet-4-20250514",
-          max_tokens:2000,
-          system:"אתה עוזר לסידורי הושבה. החזר JSON תקני בלבד ללא טקסט נוסף.",
-          messages:[{role:"user",content:prompt}]
-        })
-      });
-      if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||`שגיאה ${res.status}`);}
-      const data=await res.json();
-      const text=data.content?.[0]?.text||"";
-      const clean=text.replace(/```json\n?|```/g,"").trim();
-      const parsed=JSON.parse(clean);
+      const res=await sb.functions.invoke("ai-seating",{body:{prompt}});
+      if(res.error)throw new Error(res.error.message);
+      const parsed=res.data;
       setResult(parsed);
     }catch(e){
       setError(`שגיאה: ${e.message||"נסה שוב"}`);
