@@ -3297,155 +3297,39 @@ function PackagesScreen({ event, onBack }) {
 
 // ─── SMS SCREEN ───────────────────────────────────────────────────────────────
 function SMSScreen({ event, guests }) {
-  const [balance]=useState(0);
-  const [schedules,setSchedules]=useState({invite:null,reminder:null,thanks:null,smsrem:null});
-  const [showPicker,setShowPicker]=useState(null);
+  const groomName = event.groom_name || "החתן";
+  const brideName = event.bride_name || "הכלה";
 
-  const msgTypes=[
-    {id:"invite",icon:"✈️",title:"שליחת הזמנות",desc:"אוטומטי לפני האירוע",locked:false},
-    {id:"reminder",icon:"✈️",title:"שליחת סבב נוסף",desc:"אוטומטי למי שלא ענה",locked:false},
-    {id:"smsrem",icon:"🔔",title:"שליחת תזכורות",desc:"אוטומטי לפני האירוע",locked:false},
-    {id:"thanks",icon:"👍",title:"שליחת תודות",desc:"אוטומטי לאחר האירוע",locked:false},
-  ];
+  const eventDateObj = event.date ? new Date(event.date) : null;
+  const days = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+  const eventDate = eventDateObj
+    ? `יום ${days[eventDateObj.getDay()]}, ${eventDateObj.toLocaleDateString("he-IL",{day:"numeric",month:"long",year:"numeric"})}`
+    : "בקרוב";
 
-  const fmtDate=(d)=>{
-    if(!d)return null;
-    const days=["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
-    const dt=new Date(d);
-    return `${dt.toLocaleDateString("he-IL",{day:"2-digit",month:"2-digit",year:"numeric"})} יום ${days[dt.getDay()]}`;
-  };
+  const inviteUrl = `${window.location.origin}/#/invite/${event.invite_code||""}`;
 
-  return(
-    <div style={{direction:"rtl",fontFamily:"'Heebo',sans-serif",paddingBottom:80}}>
-      {/* כותרת */}
-      <div style={{background:`linear-gradient(135deg,${C.blue},${C.blueM})`,padding:"20px",marginBottom:0,color:"#fff",textAlign:"center"}}>
-        <div style={{fontSize:17,fontWeight:900,marginBottom:4}}>תזמוני הודעות SMS</div>
-        <div style={{fontSize:13,opacity:.8,marginBottom:12}}>שליחת הודעות אוטומטיות לאורחים</div>
-        <button style={{background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.4)",color:"#fff",borderRadius:20,padding:"8px 18px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",gap:6}}>
-          💬 נוסחים לשליחה
-        </button>
-      </div>
-
-      {/* יתרת SMS */}
-      <div style={{background:balance===0?"#FEF2F2":C.blueXL,borderBottom:`1px solid ${balance===0?"#FCA5A5":C.border}`,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div style={{fontSize:13,fontWeight:700,color:balance===0?C.danger:C.text}}>
-          {balance===0?"⚠️ אין יתרת SMS":"✅ יתרת SMS"}
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <span style={{fontSize:18,fontWeight:900,color:balance===0?C.danger:C.blue}}>{balance}</span>
-          <button onClick={()=>alert("בקרוב! רכישת SMS")}
-            style={{background:`linear-gradient(135deg,${C.blueM},${C.blueL})`,color:"#fff",border:"none",borderRadius:10,padding:"6px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-            + רכש
-          </button>
-        </div>
-      </div>
-
-      {/* גריד 2x2 */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:C.border}}>
-        {msgTypes.map((msg)=>(
-          <div key={msg.id} style={{background:C.surface,padding:"20px 16px",textAlign:"center",opacity:msg.locked?.5:1}}>
-            {/* אייקון עגול */}
-            <div style={{width:56,height:56,borderRadius:"50%",border:`2px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,margin:"0 auto 10px",background:C.bg}}>
-              {msg.icon}
-            </div>
-            <div style={{fontSize:13,fontWeight:800,color:C.text,marginBottom:4}}>
-              שליחת <span style={{color:C.text}}>{msg.title.replace("שליחת ","")}</span>
-            </div>
-            <div style={{fontSize:11,color:C.muted,marginBottom:8,lineHeight:1.5}}>{msg.desc}</div>
-
-            {/* תאריך נבחר */}
-            <div style={{fontSize:12,fontWeight:700,color:schedules[msg.id]?C.blue:C.muted,marginBottom:10}}>
-              {schedules[msg.id]?fmtDate(schedules[msg.id]):"לא נבחר תזמון"}
-            </div>
-
-            {/* אייקון לוח שנה */}
-            <div style={{fontSize:24,marginBottom:8,color:C.muted}}>📅</div>
-
-            {/* כפתור */}
-            <button
-              onClick={()=>{
-                if(balance===0){setShowPicker("buy");}
-                else setShowPicker(msg.id);
-              }}
-              style={{background:"#4B5563",color:"#fff",border:"none",borderRadius:20,padding:"10px 20px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"80%"}}>
-              {balance===0?"רכוש SMS":"בחר תזמון"}
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* 0 צפיות בהזמנה */}
-      <div style={{background:C.surface,borderTop:`1px solid ${C.border}`,padding:"16px",textAlign:"center"}}>
-        <span style={{fontSize:14,color:C.muted,fontWeight:600}}>👁 0 צפיות בהזמנה</span>
-      </div>
-
-      {/* Picker תאריך / מודל רכישה */}
-      {showPicker&&(
-        <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setShowPicker(null)}>
-          <div onClick={e=>e.stopPropagation()} style={{background:C.surface,borderRadius:"20px 20px 0 0",padding:"24px 20px 40px",width:"100%",maxWidth:480,direction:"rtl"}}>
-            <div style={{width:40,height:4,borderRadius:2,background:C.border,margin:"0 auto 16px"}}/>
-            {showPicker==="buy"?(
-              <>
-                <div style={{fontSize:16,fontWeight:900,color:C.text,marginBottom:6,textAlign:"center"}}>📱 רכישת SMS</div>
-                <div style={{fontSize:13,color:C.muted,marginBottom:16,textAlign:"center"}}>בחר חבילת SMS כדי לתזמן שליחות</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
-                  {[[150,"₪70"],[300,"₪90"],[500,"₪120"],[800,"₪170"],[1000,"₪200"],[2000,"₪330"]].map(([sms,price])=>(
-                    <div key={sms} onClick={()=>alert(`בקרוב! רכישת ${sms} SMS ב-${price} דרך PayPlus`)}
-                      style={{border:`1.5px solid ${C.border}`,borderRadius:12,padding:"12px 6px",textAlign:"center",cursor:"pointer",background:C.bg}}
-                      onMouseEnter={e=>e.currentTarget.style.borderColor=C.blueL}
-                      onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
-                      <div style={{fontSize:18,fontWeight:900,color:C.blue}}>{sms.toLocaleString()}</div>
-                      <div style={{fontSize:10,color:C.muted,marginBottom:4}}>הודעות</div>
-                      <div style={{fontSize:14,fontWeight:800,color:C.text}}>{price}</div>
-                    </div>
-                  ))}
-                </div>
-                <button onClick={()=>setShowPicker(null)} style={{width:"100%",background:"transparent",color:C.muted,border:`1px solid ${C.border}`,borderRadius:12,padding:"11px",fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>סגור</button>
-              </>
-            ):(
-              <>
-                <div style={{fontSize:15,fontWeight:800,color:C.text,marginBottom:16}}>
-                  {msgTypes.find(m=>m.id===showPicker)?.title} — בחר תאריך ושעה
-                </div>
-                <input type="datetime-local"
-                  onChange={e=>{setSchedules(p=>({...p,[showPicker]:e.target.value}));setShowPicker(null);}}
-                  style={{width:"100%",background:C.blueXL,border:`1.5px solid ${C.border}`,borderRadius:12,padding:"12px",fontSize:14,color:C.text,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:12}}/>
-                <button onClick={()=>setShowPicker(null)} style={{width:"100%",background:"transparent",color:C.muted,border:`1px solid ${C.border}`,borderRadius:12,padding:"11px",fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>ביטול</button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── WHATSAPP SCREEN ──────────────────────────────────────────────────────────
-function WhatsAppScreen({ event, guests }) {
   const TEMPLATES = [
     {
       id:"invite",
-      label:"✈️ הזמנה לאירוע",
-      text:`שלום {שם}! 💌\nאנו שמחים להזמין אותך לאירוע שלנו.\n📅 תאריך: ${event.date||"בקרוב"}\n📍 מקום: ${event.venue||"יפורסם"}\n\nלאישור הגעה לחץ כאן:\n{קישור}`,
+      label:"💌 הזמנה לאירוע",
+      text:`שלום {שם}! 💌\n${groomName} ו${brideName} מתחתנים! 🎉\nנשמח לראותך ביום המאושר שלנו.\n📅 ${eventDate}\n📍 ${event.venue||"יפורסם בקרוב"}\nלאישור הגעה: {קישור}`,
     },
     {
       id:"reminder",
       label:"🔔 תזכורת לממתינים",
-      text:`שלום {שם}! 👋\nעוד לא אישרת הגעה לאירוע שלנו.\nנשמח לדעת אם תוכל להגיע 🙏\n\nלאישור הגעה:\n{קישור}`,
+      text:`שלום {שם}! עוד לא אישרת הגעה לחתונה של ${groomName} ו${brideName}.\nנשמח לדעת אם תגיע 🙏\nלאישור הגעה: {קישור}`,
     },
     {
       id:"table",
       label:"🪑 מספר שולחן",
-      text:`שלום {שם}! 🎉\nאנו שמחים לראותך באירוע!\nהשולחן שלך: מספר {שולחן}\n\nלפרטים נוספים:\n{קישור}`,
+      text:`שלום {שם}! מחכים לך בחתונה של ${groomName} ו${brideName}! 🎊\nהשולחן שלך: מספר {שולחן}\n📅 ${eventDate}\n📍 ${event.venue||""}`,
     },
     {
       id:"thanks",
       label:"💙 תודה אחרי האירוע",
-      text:`שלום {שם}! 💙\nתודה רבה שהגעת לאירוע שלנו!\nשמחנו לחגוג איתך 🥂\nנזכור את הרגעים המיוחדים לתמיד.`,
+      text:`שלום {שם}! תודה רבה שהגעת לחתונה שלנו! 💙\nשמחנו לחגוג איתך.\nבאהבה, ${groomName} ו${brideName} 💍`,
     },
   ];
-
-  const inviteUrl=`${window.location.origin}/#/invite/${event.invite_code||""}`;
 
   const [selectedTemplate,setSelectedTemplate]=useState(TEMPLATES[0].id);
   const [msgText,setMsgText]=useState(TEMPLATES[0].text);
@@ -3455,16 +3339,14 @@ function WhatsAppScreen({ event, guests }) {
   const [results,setResults]=useState(null);
   const [previewGuest,setPreviewGuest]=useState(null);
 
-  const withPhone=guests.filter(g=>g.phone&&g.phone.trim().length>6);
-  const toSend=filterRsvp==="all"
-    ?withPhone
-    :filterRsvp==="pending"
-      ?withPhone.filter(g=>!g.rsvp||g.rsvp==="pending")
-      :withPhone.filter(g=>g.rsvp===filterRsvp);
-
   useEffect(()=>{
-    if(guests.length>0)setPreviewGuest(guests[0]);
+    if(guests.length>0&&!previewGuest)setPreviewGuest(guests[0]);
   },[guests]);
+
+  const withPhone=guests.filter(g=>g.phone&&g.phone.trim().length>6);
+  const toSend=filterRsvp==="all"?withPhone
+    :filterRsvp==="pending"?withPhone.filter(g=>!g.rsvp||g.rsvp==="pending")
+    :withPhone.filter(g=>g.rsvp===filterRsvp);
 
   const buildPreview=(g)=>{
     if(!g)return msgText;
@@ -3475,30 +3357,291 @@ function WhatsAppScreen({ event, guests }) {
       .replace(/{שולחן}/g,"3");
   };
 
-  const pickTemplate=(t)=>{
-    setSelectedTemplate(t.id);
-    setMsgText(t.text);
+  const charCount=msgText.length;
+  const smsCount=charCount<=160?1:Math.ceil(charCount/153);
+
+  const pickTemplate=(t)=>{setSelectedTemplate(t.id);setMsgText(t.text);};
+
+  const sendAll=async()=>{
+    if(toSend.length===0){alert("אין אורחים לשליחה עם מספר טלפון");return;}
+    if(!window.confirm(`לשלוח SMS ל-${toSend.length} אורחים?`))return;
+    setSending(true);setProgress(0);setResults(null);
+    try{
+      let p=0;
+      const iv=setInterval(()=>{p=Math.min(p+4,92);setProgress(p);},300);
+      const{data,error}=await sb.functions.invoke("send-sms",{
+        body:{
+          guests:toSend.map(g=>({id:g.id,name:g.name,phone:g.phone,table:g.table_id})),
+          message:msgText,
+          inviteUrl,
+          source:"Sidor-IL",
+        }
+      });
+      clearInterval(iv);
+      if(error)throw new Error(error.message);
+      setProgress(100);
+      setResults(data?.results||[]);
+    }catch(e){
+      alert("שגיאה בשליחה: "+e.message);
+    }
+    setSending(false);
   };
+
+  const sentOk=results?.filter(r=>r.status?.includes("✓")).length||0;
+  const sentFail=results?.filter(r=>r.status?.includes("✗")).length||0;
+
+  return(
+    <div style={{direction:"rtl",fontFamily:"'Heebo',sans-serif",padding:"16px 24px",paddingBottom:80}}>
+
+      {/* כותרת */}
+      <div style={{background:`linear-gradient(135deg,${C.blue},${C.blueM})`,borderRadius:16,padding:"18px 20px",marginBottom:20,color:"#fff",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div>
+          <div style={{fontSize:18,fontWeight:900,marginBottom:4}}>📱 שליחת SMS</div>
+          <div style={{fontSize:13,opacity:.85}}>הודעה אישית לכל אורח עם השם שלו</div>
+          <div style={{fontSize:12,marginTop:6,background:"rgba(255,255,255,.2)",borderRadius:8,padding:"4px 10px",display:"inline-block",fontWeight:700}}>
+            {groomName} ו{brideName} 💍
+          </div>
+        </div>
+        <div style={{background:"rgba(255,255,255,.2)",borderRadius:12,padding:"10px 16px",textAlign:"center"}}>
+          <div style={{fontSize:28,fontWeight:900}}>{withPhone.length}</div>
+          <div style={{fontSize:11,opacity:.85}}>עם טלפון</div>
+        </div>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
+
+        {/* עמודה שמאל — עריכה */}
+        <div>
+
+          {/* בחירת נוסח */}
+          <div style={{background:"#fff",borderRadius:14,padding:16,marginBottom:16,border:`1px solid ${C.border}`,boxShadow:"0 2px 8px rgba(0,0,0,.04)"}}>
+            <div style={{fontSize:14,fontWeight:800,color:C.text,marginBottom:12}}>📝 בחר נוסח</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {TEMPLATES.map(t=>(
+                <div key={t.id} onClick={()=>pickTemplate(t)}
+                  style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,
+                    border:`2px solid ${selectedTemplate===t.id?C.blueM:C.border}`,
+                    background:selectedTemplate===t.id?C.blueXL:"#fff",
+                    cursor:"pointer",transition:"all .15s"}}>
+                  <div style={{width:10,height:10,borderRadius:"50%",background:selectedTemplate===t.id?C.blueM:C.border,flexShrink:0}}/>
+                  <span style={{fontSize:13,fontWeight:700,color:selectedTemplate===t.id?C.blue:C.text}}>{t.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* עריכת הודעה */}
+          <div style={{background:"#fff",borderRadius:14,padding:16,marginBottom:16,border:`1px solid ${C.border}`,boxShadow:"0 2px 8px rgba(0,0,0,.04)"}}>
+            <div style={{fontSize:14,fontWeight:800,color:C.text,marginBottom:6}}>✏️ עריכת הודעה</div>
+            <div style={{fontSize:11,color:C.muted,marginBottom:10,lineHeight:1.6}}>
+              משתנים:&nbsp;
+              {["{שם}","{שם מלא}","{קישור}","{שולחן}"].map(v=>(
+                <code key={v} style={{background:C.blueXL,padding:"1px 6px",borderRadius:4,marginLeft:4,fontSize:11}}>{v}</code>
+              ))}
+            </div>
+            <textarea value={msgText} onChange={e=>setMsgText(e.target.value)}
+              style={{width:"100%",minHeight:140,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 12px",
+                fontSize:13,fontFamily:"inherit",outline:"none",resize:"vertical",lineHeight:1.8,
+                boxSizing:"border-box",direction:"rtl",color:C.text}}/>
+            {/* ספירת תווים */}
+            <div style={{display:"flex",justifyContent:"space-between",marginTop:6,fontSize:11,color:C.muted}}>
+              <span>{charCount} תווים</span>
+              <span style={{color:smsCount>1?C.danger:C.muted,fontWeight:smsCount>1?700:400}}>
+                {smsCount} SMS {smsCount>1?"(מרובה)":""}
+              </span>
+            </div>
+          </div>
+
+          {/* פילטר */}
+          <div style={{background:"#fff",borderRadius:14,padding:16,marginBottom:16,border:`1px solid ${C.border}`,boxShadow:"0 2px 8px rgba(0,0,0,.04)"}}>
+            <div style={{fontSize:14,fontWeight:800,color:C.text,marginBottom:12}}>👥 למי לשלוח?</div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+              {[
+                {v:"all",    l:`כולם (${withPhone.length})`,                                              c:"#2B6CB0"},
+                {v:"pending",l:`ממתינים (${withPhone.filter(g=>!g.rsvp||g.rsvp==="pending").length})`,   c:"#718096"},
+                {v:"confirmed",l:`מגיעים (${withPhone.filter(g=>g.rsvp==="confirmed").length})`,          c:"#276749"},
+                {v:"declined", l:`לא מגיעים (${withPhone.filter(g=>g.rsvp==="declined").length})`,       c:"#C53030"},
+              ].map(f=>(
+                <button key={f.v} onClick={()=>setFilterRsvp(f.v)}
+                  style={{background:filterRsvp===f.v?f.c:"#fff",color:filterRsvp===f.v?"#fff":f.c,
+                    border:`2px solid ${f.c}`,borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:700,
+                    cursor:"pointer",fontFamily:"inherit",transition:"all .15s"}}>
+                  {f.l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* כפתור שליחה */}
+          <button onClick={sendAll} disabled={sending||toSend.length===0}
+            style={{width:"100%",background:sending||toSend.length===0?"#A0AEC0":`linear-gradient(135deg,${C.blue},${C.blueM})`,
+              color:"#fff",border:"none",borderRadius:14,padding:"16px",fontSize:16,fontWeight:800,
+              cursor:sending||toSend.length===0?"default":"pointer",fontFamily:"inherit",
+              boxShadow:sending||toSend.length===0?"none":"0 4px 20px rgba(41,82,200,.4)",transition:"all .2s"}}>
+            {sending?`שולח... ${progress}%`:`📱 שלח SMS ל-${toSend.length} אורחים`}
+          </button>
+
+          {/* Progress Bar */}
+          {(sending||progress>0)&&(
+            <div style={{marginTop:10,background:"#E2E8F0",borderRadius:100,height:8,overflow:"hidden"}}>
+              <div style={{height:"100%",width:`${progress}%`,background:`linear-gradient(90deg,${C.blue},${C.blueL})`,borderRadius:100,transition:"width .3s"}}/>
+            </div>
+          )}
+
+          {/* תוצאות */}
+          {results&&(
+            <div style={{marginTop:16,background:"#fff",borderRadius:14,padding:16,border:`1px solid ${C.border}`}}>
+              <div style={{display:"flex",gap:12,marginBottom:12}}>
+                <div style={{flex:1,background:"#F0FFF4",borderRadius:10,padding:"12px",textAlign:"center"}}>
+                  <div style={{fontSize:24,fontWeight:900,color:"#276749"}}>{sentOk}</div>
+                  <div style={{fontSize:12,color:"#276749",fontWeight:700}}>נשלחו ✓</div>
+                </div>
+                <div style={{flex:1,background:"#FFF5F5",borderRadius:10,padding:"12px",textAlign:"center"}}>
+                  <div style={{fontSize:24,fontWeight:900,color:"#C53030"}}>{sentFail}</div>
+                  <div style={{fontSize:12,color:"#C53030",fontWeight:700}}>נכשלו ✗</div>
+                </div>
+              </div>
+              <div style={{maxHeight:200,overflowY:"auto"}}>
+                {results.map((r,i)=>(
+                  <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 8px",borderBottom:`1px solid ${C.border}`,fontSize:12}}>
+                    <span style={{fontWeight:600,color:C.text}}>{r.name}</span>
+                    <span style={{color:r.status?.includes("✓")?"#276749":"#C53030",fontWeight:700}}>{r.status}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* עמודה ימין — תצוגה מקדימה */}
+        <div>
+          <div style={{background:"#fff",borderRadius:14,padding:16,border:`1px solid ${C.border}`,boxShadow:"0 2px 8px rgba(0,0,0,.04)",position:"sticky",top:20}}>
+            <div style={{fontSize:14,fontWeight:800,color:C.text,marginBottom:12}}>👁 תצוגה מקדימה</div>
+
+            {guests.length>0&&(
+              <select value={previewGuest?.id||""} onChange={e=>setPreviewGuest(guests.find(g=>String(g.id)===e.target.value)||null)}
+                style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:8,padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",marginBottom:14,background:"#fff",color:C.text}}>
+                {guests.map(g=>(
+                  <option key={g.id} value={g.id}>{g.name}{g.phone?" ✓":""}</option>
+                ))}
+              </select>
+            )}
+
+            {/* בועת SMS */}
+            <div style={{background:"#1C1C1E",borderRadius:14,overflow:"hidden"}}>
+              <div style={{background:"#2C2C2E",padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:36,height:36,borderRadius:"50%",background:C.blueM,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:800,color:"#fff",flexShrink:0}}>
+                  {previewGuest?.name?.[0]||"א"}
+                </div>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>{previewGuest?.name||"אורח לדוגמה"}</div>
+                  <div style={{fontSize:11,color:"#8E8E93"}}>SMS</div>
+                </div>
+              </div>
+              <div style={{padding:16}}>
+                <div style={{background:"#3A3A3C",borderRadius:"0 12px 12px 12px",padding:"10px 14px",maxWidth:"90%",display:"inline-block"}}>
+                  <div style={{fontSize:13,color:"#fff",lineHeight:1.8,whiteSpace:"pre-wrap",direction:"rtl"}}>
+                    {buildPreview(previewGuest)}
+                  </div>
+                  <div style={{fontSize:10,color:"#8E8E93",textAlign:"left",marginTop:6}}>
+                    {new Date().toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* מידע */}
+            <div style={{marginTop:14,background:C.blueXL,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 14px"}}>
+              <div style={{fontSize:12,color:C.text,lineHeight:1.7}}>
+                ✅ מחובר ל-<strong>019 SMS</strong><br/>
+                📊 {smsCount} SMS לאורח × {toSend.length} אורחים = <strong>{smsCount*toSend.length} SMS סה"כ</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── WHATSAPP SCREEN ──────────────────────────────────────────────────────────
+function WhatsAppScreen({ event, guests }) {
+  const groomName = event.groom_name || "החתן";
+  const brideName = event.bride_name || "הכלה";
+  const coupleStr = `${groomName} ו${brideName}`;
+
+  // תאריך בפורמט עברי נכון: יום ב׳, 30 באפריל 2026
+  const eventDateObj = event.date ? new Date(event.date) : null;
+  const days = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+  const eventDate = eventDateObj
+    ? `יום ${days[eventDateObj.getDay()]}, ${eventDateObj.toLocaleDateString("he-IL",{day:"numeric",month:"long",year:"numeric"})}`
+    : "בקרוב";
+
+  const inviteUrl = `${window.location.origin}/#/invite/${event.invite_code||""}`;
+
+  const TEMPLATES = [
+    {
+      id:"invite",
+      label:"💌 הזמנה לאירוע",
+      text:`שלום {שם} היקר/ה! 💌\n\n*${groomName} ו${brideName} מתחתנים!* 🎉\n\nאנחנו נרגשים להזמין אותך ליום המאושר בחיינו ונשמח מאוד לראותך שם!\n\n📅 *תאריך:* ${eventDate}\n📍 *מקום:* ${event.venue||"יפורסם בקרוב"}\n\n👇 *לאישור הגעה לחץ/י כאן:*\n{קישור}\n\nבאהבה 💍\n${groomName} ו${brideName}`,
+    },
+    {
+      id:"reminder",
+      label:"🔔 תזכורת לממתינים",
+      text:`שלום {שם}! 👋\n\nעוד לא אישרת הגעה לחתונה של *${groomName} ו${brideName}*.\nנשמח מאוד לדעת אם תוכל/י להגיע 🙏\n\n📅 *${eventDate}*\n\n👇 *לאישור הגעה לחץ/י כאן:*\n{קישור}\n\nמחכים לך! 💙`,
+    },
+    {
+      id:"table",
+      label:"🪑 מספר שולחן",
+      text:`שלום {שם}! 🎊\n\nמחכים לך היום בחתונה של *${groomName} ו${brideName}*!\n\n🪑 *השולחן שלך: מספר {שולחן}*\n\n📅 ${eventDate}\n📍 ${event.venue||""}\n\n👇 לפרטים נוספים:\n{קישור}\n\nנתראה בקרוב! 🥂`,
+    },
+    {
+      id:"thanks",
+      label:"💙 תודה אחרי האירוע",
+      text:`שלום {שם} היקר/ה! 💙\n\nתודה רבה שהגעת לחתונה שלנו!\nשמחנו כל כך לחגוג איתך את היום המיוחד הזה 🥰\n\nבאהבה רבה,\n*${groomName} ו${brideName}* 💍`,
+    },
+  ];
+
+  const [selectedTemplate,setSelectedTemplate]=useState(TEMPLATES[0].id);
+  const [msgText,setMsgText]=useState(TEMPLATES[0].text);
+  const [filterRsvp,setFilterRsvp]=useState("all");
+  const [sending,setSending]=useState(false);
+  const [progress,setProgress]=useState(0);
+  const [results,setResults]=useState(null);
+  const [previewGuest,setPreviewGuest]=useState(null);
+
+  useEffect(()=>{
+    if(guests.length>0&&!previewGuest)setPreviewGuest(guests[0]);
+  },[guests]);
+
+  const withPhone=guests.filter(g=>g.phone&&g.phone.trim().length>6);
+  const toSend=filterRsvp==="all"?withPhone
+    :filterRsvp==="pending"?withPhone.filter(g=>!g.rsvp||g.rsvp==="pending")
+    :withPhone.filter(g=>g.rsvp===filterRsvp);
+
+  const buildPreview=(g)=>{
+    if(!g)return msgText;
+    return msgText
+      .replace(/{שם}/g,g.name.split(" ")[0])
+      .replace(/{שם מלא}/g,g.name)
+      .replace(/{קישור}/g,`${inviteUrl}?g=${g.id}`)
+      .replace(/{שולחן}/g,"3");
+  };
+
+  const pickTemplate=(t)=>{setSelectedTemplate(t.id);setMsgText(t.text);};
 
   const sendAll=async()=>{
     if(toSend.length===0){alert("אין אורחים לשליחה עם מספר טלפון");return;}
     if(!window.confirm(`לשלוח הודעה ל-${toSend.length} אורחים?`))return;
     setSending(true);setProgress(0);setResults(null);
-
     try{
-      const{data,error}=await sb.functions.invoke("send-whatsapp",{
-        body:{
-          guests:toSend.map(g=>({id:g.id,name:g.name,phone:g.phone})),
-          message:msgText,
-          inviteUrl,
-        }
-      });
-      if(error)throw new Error(error.message);
-
-      // simulate progress while waiting
       let p=0;
-      const iv=setInterval(()=>{p=Math.min(p+2,95);setProgress(p);},200);
+      const iv=setInterval(()=>{p=Math.min(p+3,92);setProgress(p);},400);
+      const{data,error}=await sb.functions.invoke("send-whatsapp",{
+        body:{guests:toSend.map(g=>({id:g.id,name:g.name,phone:g.phone})),message:msgText,inviteUrl}
+      });
       clearInterval(iv);
+      if(error)throw new Error(error.message);
       setProgress(100);
       setResults(data?.results||[]);
     }catch(e){
@@ -3517,10 +3660,13 @@ function WhatsAppScreen({ event, guests }) {
       <div style={{background:"linear-gradient(135deg,#075E54,#25D366)",borderRadius:16,padding:"18px 20px",marginBottom:20,color:"#fff",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div>
           <div style={{fontSize:18,fontWeight:900,marginBottom:4}}>💬 שליחת WhatsApp</div>
-          <div style={{fontSize:13,opacity:.85}}>שליחה אישית לכל אורח עם השם שלו</div>
+          <div style={{fontSize:13,opacity:.85}}>הודעה אישית לכל אורח עם השם שלו</div>
+          <div style={{fontSize:12,marginTop:6,background:"rgba(255,255,255,.2)",borderRadius:8,padding:"4px 10px",display:"inline-block",fontWeight:700}}>
+            {coupleStr} 💍
+          </div>
         </div>
         <div style={{background:"rgba(255,255,255,.2)",borderRadius:12,padding:"10px 16px",textAlign:"center"}}>
-          <div style={{fontSize:26,fontWeight:900}}>{withPhone.length}</div>
+          <div style={{fontSize:28,fontWeight:900}}>{withPhone.length}</div>
           <div style={{fontSize:11,opacity:.85}}>עם טלפון</div>
         </div>
       </div>
@@ -3536,7 +3682,10 @@ function WhatsAppScreen({ event, guests }) {
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {TEMPLATES.map(t=>(
                 <div key={t.id} onClick={()=>pickTemplate(t)}
-                  style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,border:`2px solid ${selectedTemplate===t.id?"#25D366":C.border}`,background:selectedTemplate===t.id?"#F0FFF4":"#fff",cursor:"pointer",transition:"all .15s"}}>
+                  style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,
+                    border:`2px solid ${selectedTemplate===t.id?"#25D366":C.border}`,
+                    background:selectedTemplate===t.id?"#F0FFF4":"#fff",
+                    cursor:"pointer",transition:"all .15s"}}>
                   <div style={{width:10,height:10,borderRadius:"50%",background:selectedTemplate===t.id?"#25D366":C.border,flexShrink:0}}/>
                   <span style={{fontSize:13,fontWeight:700,color:selectedTemplate===t.id?"#276749":C.text}}>{t.label}</span>
                 </div>
@@ -3547,25 +3696,32 @@ function WhatsAppScreen({ event, guests }) {
           {/* עריכת הודעה */}
           <div style={{background:"#fff",borderRadius:14,padding:16,marginBottom:16,border:`1px solid ${C.border}`,boxShadow:"0 2px 8px rgba(0,0,0,.04)"}}>
             <div style={{fontSize:14,fontWeight:800,color:C.text,marginBottom:6}}>✏️ עריכת הודעה</div>
-            <div style={{fontSize:11,color:C.muted,marginBottom:10}}>
-              משתנים: <code style={{background:C.blueXL,padding:"1px 5px",borderRadius:4}}>{"{שם}"}</code> · <code style={{background:C.blueXL,padding:"1px 5px",borderRadius:4}}>{"{שם מלא}"}</code> · <code style={{background:C.blueXL,padding:"1px 5px",borderRadius:4}}>{"{קישור}"}</code>
+            <div style={{fontSize:11,color:C.muted,marginBottom:10,lineHeight:1.6}}>
+              משתנים זמינים:&nbsp;
+              {["{שם}","{שם מלא}","{קישור}","{שולחן}"].map(v=>(
+                <code key={v} style={{background:C.blueXL,padding:"1px 6px",borderRadius:4,marginLeft:4,fontSize:11}}>{v}</code>
+              ))}
             </div>
             <textarea value={msgText} onChange={e=>setMsgText(e.target.value)}
-              style={{width:"100%",minHeight:160,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 12px",fontSize:13,fontFamily:"inherit",outline:"none",resize:"vertical",lineHeight:1.7,boxSizing:"border-box",direction:"rtl"}}/>
+              style={{width:"100%",minHeight:180,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 12px",
+                fontSize:13,fontFamily:"inherit",outline:"none",resize:"vertical",lineHeight:1.8,
+                boxSizing:"border-box",direction:"rtl",color:C.text}}/>
           </div>
 
-          {/* פילטר מי לשלוח */}
+          {/* פילטר */}
           <div style={{background:"#fff",borderRadius:14,padding:16,marginBottom:16,border:`1px solid ${C.border}`,boxShadow:"0 2px 8px rgba(0,0,0,.04)"}}>
             <div style={{fontSize:14,fontWeight:800,color:C.text,marginBottom:12}}>👥 למי לשלוח?</div>
             <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
               {[
-                {v:"all",l:`כולם (${withPhone.length})`,c:"#2B6CB0"},
-                {v:"pending",l:`ממתינים (${withPhone.filter(g=>!g.rsvp||g.rsvp==="pending").length})`,c:"#718096"},
-                {v:"confirmed",l:`מגיעים (${withPhone.filter(g=>g.rsvp==="confirmed").length})`,c:"#276749"},
-                {v:"declined",l:`לא מגיעים (${withPhone.filter(g=>g.rsvp==="declined").length})`,c:"#C53030"},
+                {v:"all",    l:`כולם (${withPhone.length})`,                                               c:"#2B6CB0"},
+                {v:"pending",l:`ממתינים (${withPhone.filter(g=>!g.rsvp||g.rsvp==="pending").length})`,    c:"#718096"},
+                {v:"confirmed",l:`מגיעים (${withPhone.filter(g=>g.rsvp==="confirmed").length})`,           c:"#276749"},
+                {v:"declined", l:`לא מגיעים (${withPhone.filter(g=>g.rsvp==="declined").length})`,        c:"#C53030"},
               ].map(f=>(
                 <button key={f.v} onClick={()=>setFilterRsvp(f.v)}
-                  style={{background:filterRsvp===f.v?f.c:"#fff",color:filterRsvp===f.v?"#fff":f.c,border:`2px solid ${f.c}`,borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",transition:"all .15s"}}>
+                  style={{background:filterRsvp===f.v?f.c:"#fff",color:filterRsvp===f.v?"#fff":f.c,
+                    border:`2px solid ${f.c}`,borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:700,
+                    cursor:"pointer",fontFamily:"inherit",transition:"all .15s"}}>
                   {f.l}
                 </button>
               ))}
@@ -3574,13 +3730,16 @@ function WhatsAppScreen({ event, guests }) {
 
           {/* כפתור שליחה */}
           <button onClick={sendAll} disabled={sending||toSend.length===0}
-            style={{width:"100%",background:sending?"#A0AEC0":toSend.length===0?"#CBD5E0":"linear-gradient(135deg,#075E54,#25D366)",color:"#fff",border:"none",borderRadius:14,padding:"16px",fontSize:16,fontWeight:800,cursor:sending||toSend.length===0?"default":"pointer",fontFamily:"inherit",boxShadow:sending||toSend.length===0?"none":"0 4px 20px rgba(37,211,102,.4)",transition:"all .2s"}}>
+            style={{width:"100%",background:sending||toSend.length===0?"#A0AEC0":"linear-gradient(135deg,#075E54,#25D366)",
+              color:"#fff",border:"none",borderRadius:14,padding:"16px",fontSize:16,fontWeight:800,
+              cursor:sending||toSend.length===0?"default":"pointer",fontFamily:"inherit",
+              boxShadow:sending||toSend.length===0?"none":"0 4px 20px rgba(37,211,102,.4)",transition:"all .2s"}}>
             {sending?`שולח... ${progress}%`:`💬 שלח ל-${toSend.length} אורחים`}
           </button>
 
           {/* Progress Bar */}
-          {sending&&(
-            <div style={{marginTop:12,background:"#E2E8F0",borderRadius:100,height:8,overflow:"hidden"}}>
+          {(sending||progress>0)&&(
+            <div style={{marginTop:10,background:"#E2E8F0",borderRadius:100,height:8,overflow:"hidden"}}>
               <div style={{height:"100%",width:`${progress}%`,background:"linear-gradient(90deg,#075E54,#25D366)",borderRadius:100,transition:"width .3s"}}/>
             </div>
           )}
@@ -3589,18 +3748,18 @@ function WhatsAppScreen({ event, guests }) {
           {results&&(
             <div style={{marginTop:16,background:"#fff",borderRadius:14,padding:16,border:`1px solid ${C.border}`}}>
               <div style={{display:"flex",gap:12,marginBottom:12}}>
-                <div style={{flex:1,background:"#F0FFF4",borderRadius:10,padding:"10px",textAlign:"center"}}>
-                  <div style={{fontSize:22,fontWeight:900,color:"#276749"}}>{sentOk}</div>
-                  <div style={{fontSize:11,color:"#276749",fontWeight:600}}>נשלחו ✓</div>
+                <div style={{flex:1,background:"#F0FFF4",borderRadius:10,padding:"12px",textAlign:"center"}}>
+                  <div style={{fontSize:24,fontWeight:900,color:"#276749"}}>{sentOk}</div>
+                  <div style={{fontSize:12,color:"#276749",fontWeight:700}}>נשלחו ✓</div>
                 </div>
-                <div style={{flex:1,background:"#FFF5F5",borderRadius:10,padding:"10px",textAlign:"center"}}>
-                  <div style={{fontSize:22,fontWeight:900,color:"#C53030"}}>{sentFail}</div>
-                  <div style={{fontSize:11,color:"#C53030",fontWeight:600}}>נכשלו ✗</div>
+                <div style={{flex:1,background:"#FFF5F5",borderRadius:10,padding:"12px",textAlign:"center"}}>
+                  <div style={{fontSize:24,fontWeight:900,color:"#C53030"}}>{sentFail}</div>
+                  <div style={{fontSize:12,color:"#C53030",fontWeight:700}}>נכשלו ✗</div>
                 </div>
               </div>
               <div style={{maxHeight:200,overflowY:"auto"}}>
                 {results.map((r,i)=>(
-                  <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 8px",borderBottom:`1px solid ${C.border}`,fontSize:12}}>
+                  <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 8px",borderBottom:`1px solid ${C.border}`,fontSize:12}}>
                     <span style={{fontWeight:600,color:C.text}}>{r.name}</span>
                     <span style={{color:r.status?.includes("✓")?"#276749":"#C53030",fontWeight:700}}>{r.status}</span>
                   </div>
@@ -3615,19 +3774,19 @@ function WhatsAppScreen({ event, guests }) {
           <div style={{background:"#fff",borderRadius:14,padding:16,border:`1px solid ${C.border}`,boxShadow:"0 2px 8px rgba(0,0,0,.04)",position:"sticky",top:20}}>
             <div style={{fontSize:14,fontWeight:800,color:C.text,marginBottom:12}}>👁 תצוגה מקדימה</div>
 
-            {/* בחירת אורח לתצוגה */}
             {guests.length>0&&(
               <select value={previewGuest?.id||""} onChange={e=>setPreviewGuest(guests.find(g=>String(g.id)===e.target.value)||null)}
-                style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:8,padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",marginBottom:14,background:"#fff"}}>
+                style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:8,padding:"8px 12px",fontSize:13,fontFamily:"inherit",outline:"none",marginBottom:14,background:"#fff",color:C.text}}>
                 {guests.map(g=>(
-                  <option key={g.id} value={g.id}>{g.name} {g.phone?"✓":""}</option>
+                  <option key={g.id} value={g.id}>{g.name}{g.phone?" ✓":""}</option>
                 ))}
               </select>
             )}
 
             {/* בועת WhatsApp */}
-            <div style={{background:"#ECE5DD",borderRadius:14,padding:16,minHeight:200}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,background:"#075E54",borderRadius:"14px 14px 0 0",margin:"-16px -16px 14px",padding:"12px 16px"}}>
+            <div style={{background:"#ECE5DD",borderRadius:14,overflow:"hidden"}}>
+              {/* header */}
+              <div style={{background:"#075E54",padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
                 <div style={{width:36,height:36,borderRadius:"50%",background:"#25D366",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:800,color:"#fff",flexShrink:0}}>
                   {previewGuest?.name?.[0]||"א"}
                 </div>
@@ -3636,20 +3795,23 @@ function WhatsAppScreen({ event, guests }) {
                   <div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>מחובר</div>
                 </div>
               </div>
-              <div style={{background:"#fff",borderRadius:"0 12px 12px 12px",padding:"10px 14px",maxWidth:"85%",boxShadow:"0 1px 3px rgba(0,0,0,.1)",display:"inline-block"}}>
-                <div style={{fontSize:13,color:"#1A202C",lineHeight:1.7,whiteSpace:"pre-wrap",direction:"rtl"}}>
-                  {buildPreview(previewGuest)}
-                </div>
-                <div style={{fontSize:10,color:"#999",textAlign:"left",marginTop:4}}>
-                  {new Date().toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})} ✓✓
+              {/* הודעה */}
+              <div style={{padding:16}}>
+                <div style={{background:"#fff",borderRadius:"0 12px 12px 12px",padding:"10px 14px",maxWidth:"90%",boxShadow:"0 1px 3px rgba(0,0,0,.1)",display:"inline-block"}}>
+                  <div style={{fontSize:13,color:"#1A202C",lineHeight:1.8,whiteSpace:"pre-wrap",direction:"rtl"}}>
+                    {buildPreview(previewGuest)}
+                  </div>
+                  <div style={{fontSize:10,color:"#999",textAlign:"left",marginTop:6}}>
+                    {new Date().toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})} ✓✓
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* אזהרה */}
-            <div style={{marginTop:14,background:"#FFFBEB",border:"1.5px solid #F6E05E",borderRadius:10,padding:"10px 12px"}}>
-              <div style={{fontSize:12,color:"#744210",lineHeight:1.6}}>
-                ⚠️ <strong>לפני שליחה:</strong> ודא שהגדרת את Twilio ב-Supabase Secrets. ללא הגדרה — ההודעות לא יישלחו.
+            <div style={{marginTop:14,background:"#FFFBEB",border:"1.5px solid #F6E05E",borderRadius:10,padding:"10px 14px"}}>
+              <div style={{fontSize:12,color:"#744210",lineHeight:1.7}}>
+                ⚠️ <strong>לפני שליחה:</strong> ודא שהגדרת את Twilio Secrets ב-Supabase. ללא הגדרה — ההודעות לא יישלחו.
               </div>
             </div>
           </div>
