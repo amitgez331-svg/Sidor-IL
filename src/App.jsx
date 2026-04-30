@@ -4032,7 +4032,7 @@ const INVITE_TEMPLATES = {
   ],
 };
 
-function InvitePage({ code }) {
+function InvitePage({ code, guestId }) {
   const [event,setEvent]=useState(null);
   const [loading,setLoading]=useState(true);
   const [firstName,setFirstName]=useState("");
@@ -4042,29 +4042,49 @@ function InvitePage({ code }) {
   const [rsvp,setRsvp]=useState(null);
   const [submitting,setSubmitting]=useState(false);
   const [submitted,setSubmitted]=useState(false);
+  const [knownGuest,setKnownGuest]=useState(null); // אורח מזוהה מהקישור
   // duplicate detection
-  const [dupGuest,setDupGuest]=useState(null); // the existing guest found
+  const [dupGuest,setDupGuest]=useState(null);
   const [showDupModal,setShowDupModal]=useState(false);
 
   useEffect(()=>{
     sb.from("events").select("*").eq("invite_code",code).eq("invite_active",true).single()
-      .then(({data})=>{
+      .then(async({data})=>{
         setEvent(data||null);setLoading(false);
-        // עדכן צפיות
         if(data){
           sb.from("events").update({views:(data.views||0)+1}).eq("id",data.id);
+          // אם יש guestId — טען את פרטי האורח ומלא אוטומטית
+          if(guestId){
+            const{data:g}=await sb.from("guests").select("*").eq("id",guestId).single();
+            if(g){
+              setKnownGuest(g);
+              const parts=g.name?.split(" ")||[];
+              setFirstName(parts[0]||"");
+              setLastName(parts.slice(1).join(" ")||"");
+              setPhone(g.phone||"");
+              setGuestCount(g.guest_count||1);
+              if(g.rsvp&&g.rsvp!=="pending")setRsvp(g.rsvp);
+              // עדכן צפיות של האורח
+              sb.from("guests").update({views:(g.views||0)+1}).eq("id",g.id);
+            }
+          }
         }
       });
-  },[code]);
+  },[code,guestId]);
 
   const doInsert=async()=>{
     const fullName=`${firstName.trim()}${lastName.trim()?" "+lastName.trim():""}`;
-    await sb.from("guests").insert({name:fullName,phone:phone.trim()||null,rsvp,guest_count:guestCount,event_id:event.id,table_id:null});
+    if(knownGuest){
+      // עדכן את האורח הידוע מהקישור
+      await sb.from("guests").update({rsvp,guest_count:guestCount,phone:phone.trim()||knownGuest.phone||null,views:(knownGuest.views||0)+1}).eq("id",knownGuest.id);
+    } else {
+      await sb.from("guests").insert({name:fullName,phone:phone.trim()||null,rsvp,guest_count:guestCount,event_id:event.id,table_id:null,views:1});
+    }
     setSubmitted(true);setSubmitting(false);setShowDupModal(false);
   };
 
   const doUpdate=async()=>{
-    await sb.from("guests").update({rsvp,guest_count:guestCount,phone:phone.trim()||dupGuest.phone||null}).eq("id",dupGuest.id);
+    await sb.from("guests").update({rsvp,guest_count:guestCount,phone:phone.trim()||dupGuest.phone||null,views:(dupGuest.views||0)+1}).eq("id",dupGuest.id);
     setSubmitted(true);setSubmitting(false);setShowDupModal(false);
   };
 
@@ -4742,9 +4762,11 @@ export default function App() {
     </div>);
   }
 
-  const inviteMatch=path.match(/^\/invite\/([a-z0-9]+)$/i)||hash.match(/^#\/invite\/([a-z0-9]+)$/i);
+  const inviteMatch=path.match(/^\/invite\/([a-z0-9]+)/i)||hash.match(/^#\/invite\/([a-z0-9]+)/i);
   if(inviteMatch){
-    return(<><style>{`@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;800;900&family=Syne:wght@700;800&display=swap'); *{box-sizing:border-box;margin:0;padding:0} @keyframes spin{to{transform:rotate(360deg)}} @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}} @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}`}</style><InvitePage code={inviteMatch[1]}/></>);
+    const guestId=new URLSearchParams(window.location.search).get("g")||
+      hash.includes("?g=")&&hash.split("?g=")[1]||null;
+    return(<><style>{`@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;800;900&family=Syne:wght@700;800&display=swap'); *{box-sizing:border-box;margin:0;padding:0} @keyframes spin{to{transform:rotate(360deg)}} @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}} @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}`}</style><InvitePage code={inviteMatch[1]} guestId={guestId}/></>);
   }
 
   if(checking)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:C.bg}}><Spinner size={40}/></div>);
