@@ -4423,7 +4423,7 @@ function WhatsAppScreen({ event, guests }) {
             {/* אזהרה */}
             <div style={{marginTop:14,background:"#FFFBEB",border:"1.5px solid #F6E05E",borderRadius:10,padding:"10px 14px"}}>
               <div style={{fontSize:12,color:"#744210",lineHeight:1.7}}>
-                ⚠️ <strong>לפני שליחה:</strong> ודא שהגדרת את Twilio Secrets ב-Supabase. ללא הגדרה — ההודעות לא יישלחו.
+                ⚠️ <strong>לפני שליחה:</strong> ודא שהגדרת את Twilio Secrets ב-Supabase. ללא הגדרה, ההודעות לא יישלחו.
               </div>
             </div>
           </div>
