@@ -2173,114 +2173,105 @@ function SeatingApp({ user, event, onBack }) {
           <div onDragOver={e=>e.preventDefault()}
             onDrop={e=>{if(e.defaultPrevented)return;e.preventDefault();}}
             onClick={e=>{if(e.target===e.currentTarget)setSelected(null);}}
-            style={{flex:1,overflow:"auto",background:"#F8F6F0"}}>
-            <div className="map-bg"
-              style={{position:"relative",width:1200,height:800,
-                background:"#F5F0E8",
-                border:"3px solid #D4C9B0",margin:8,borderRadius:8,boxShadow:"0 2px 12px rgba(0,0,0,0.1)"}}
-              onClick={e=>{if(e.target===e.currentTarget)setSelected(null);}}>
+            style={{flex:1,overflow:"auto",background:"#F8F6F0",display:"flex",alignItems:"flex-start",justifyContent:"flex-start"}}>
+            {(()=>{
+              const MAP_W=1200,MAP_H=800;
+              return(
+                <div style={{position:"relative",width:MAP_W,height:MAP_H,flexShrink:0,
+                  background:"#F5F0E8",
+                  border:"3px solid #D4C9B0",margin:8,borderRadius:8,boxShadow:"0 2px 12px rgba(0,0,0,0.1)"}}
+                  onClick={e=>{if(e.target===e.currentTarget)setSelected(null);}}>
 
-              {/* ריצוף */}
-              <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none"}} xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <pattern id="tiles" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
-                    <rect x="0" y="0" width="50" height="50" fill="#F5F0E8"/>
-                    <rect x="1" y="1" width="23" height="23" fill="#EDE8DC" rx="1"/>
-                    <rect x="26" y="1" width="23" height="23" fill="#EDE8DC" rx="1"/>
-                    <rect x="1" y="26" width="23" height="23" fill="#EDE8DC" rx="1"/>
-                    <rect x="26" y="26" width="23" height="23" fill="#EDE8DC" rx="1"/>
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#tiles)"/>
-              </svg>
+                  {/* ריצוף */}
+                  <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none"}} xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <pattern id="tiles" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
+                        <rect x="0" y="0" width="50" height="50" fill="#F5F0E8"/>
+                        <rect x="1" y="1" width="23" height="23" fill="#EDE8DC" rx="1"/>
+                        <rect x="26" y="1" width="23" height="23" fill="#EDE8DC" rx="1"/>
+                        <rect x="1" y="26" width="23" height="23" fill="#EDE8DC" rx="1"/>
+                        <rect x="26" y="26" width="23" height="23" fill="#EDE8DC" rx="1"/>
+                      </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#tiles)"/>
+                  </svg>
 
-              {/* קירות */}
-              <div style={{position:"absolute",inset:0,border:"6px solid #B8A882",borderRadius:6,pointerEvents:"none",zIndex:1}}/>
+                  {/* קירות */}
+                  <div style={{position:"absolute",inset:0,border:"6px solid #B8A882",borderRadius:6,pointerEvents:"none",zIndex:1}}/>
 
-              {/* ─── במה — למעלה מרכז ─── */}
-              <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",
-                width:300,height:72,
-                background:"linear-gradient(180deg,#4A1E8C,#7B3FD4)",
-                borderRadius:"0 0 20px 20px",border:"3px solid #6B21A8",borderTop:"none",
-                boxShadow:"0 6px 20px rgba(107,33,168,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:5}}>
-                {/* תאורה */}
-                <div style={{position:"absolute",top:6,left:0,right:0,display:"flex",justifyContent:"space-around",padding:"0 20px"}}>
-                  {["#FF6B6B","#FFD700","#4ECDC4","#FF9FF3","#FFD700"].map((col,i)=>(
-                    <div key={i} style={{width:8,height:8,borderRadius:"50%",background:col,boxShadow:`0 0 8px ${col}`,opacity:0.9}}/>
-                  ))}
-                </div>
-                <div style={{textAlign:"center",marginTop:10}}>
-                  <div style={{fontSize:18,marginBottom:2}}>🎤✨</div>
-                  <div style={{fontSize:13,fontWeight:900,color:"#FFD700",letterSpacing:2,textShadow:"0 0 10px rgba(255,215,0,0.6)"}}>★ במה ★</div>
-                </div>
-              </div>
-
-              {/* ─── בר — פינה ימין עליון, צמוד לקיר ─── */}
-              <div style={{position:"absolute",top:0,right:0,
-                width:150,height:76,
-                background:"linear-gradient(160deg,#1A1A2E,#16213E,#0F3460)",
-                borderRadius:"0 0 0 18px",border:"3px solid #E94560",borderTop:"none",borderRight:"none",
-                boxShadow:"0 6px 20px rgba(233,69,96,0.3)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:5,
-                overflow:"hidden"}}>
-                {/* ניאון */}
-                <div style={{position:"absolute",top:4,left:0,right:0,display:"flex",justifyContent:"center",gap:6}}>
-                  {["#FF6B9D","#C77DFF","#48CAE4"].map((col,i)=>(
-                    <div key={i} style={{width:6,height:6,borderRadius:"50%",background:col,boxShadow:`0 0 8px ${col}`}}/>
-                  ))}
-                </div>
-                <div style={{textAlign:"center",marginTop:6}}>
-                  <div style={{fontSize:20,marginBottom:3}}>🍸🥂</div>
-                  <div style={{fontSize:13,fontWeight:900,color:"#E94560",letterSpacing:2,textShadow:"0 0 8px rgba(233,69,96,0.8)"}}>BAR</div>
-                  <div style={{fontSize:9,color:"rgba(255,255,255,0.6)",fontWeight:600}}>open bar</div>
-                </div>
-              </div>
-
-              {/* ─── כניסה — למטה מרכז, צמוד לקיר ─── */}
-              <div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",
-                width:140,height:36,background:"linear-gradient(180deg,#2C3E50,#34495E)",
-                borderRadius:"12px 12px 0 0",border:"3px solid #1A252F",borderBottom:"none",
-                display:"flex",alignItems:"center",justifyContent:"center",zIndex:5}}>
-                <span style={{fontSize:12,fontWeight:800,color:"#fff",letterSpacing:1}}>🚪 כניסה</span>
-              </div>
-
-              {/* ─── שולחנות — עם כפתור עריכה שנשאר עם השולחן ─── */}
-              {tables.map(t=>{
-                let posX=t.x, posY=t.y;
-                const hmd=e=>{
-                  e.stopPropagation();
-                  setSelected(t.id);
-                  const ox=e.clientX-posX, oy=e.clientY-posY;
-                  const mv=me=>{
-                    posX=me.clientX-ox;
-                    posY=me.clientY-oy;
-                    moveTablePos(t.id,posX,posY);
-                  };
-                  const up=()=>{
-                    saveTablePos(t.id,posX,posY);
-                    window.removeEventListener("mousemove",mv);
-                    window.removeEventListener("mouseup",up);
-                  };
-                  window.addEventListener("mousemove",mv);
-                  window.addEventListener("mouseup",up);
-                };
-                return(
-                  <div key={t.id} style={{position:"absolute",left:t.x,top:t.y,zIndex:selected===t.id?10:3}}>
-                    <TableNode table={t} selected={selected===t.id} onMouseDown={hmd}
-                      onDrop={e=>{const gid=e.dataTransfer.getData("guestId");const f=e.dataTransfer.getData("fromTable")||null;if(gid)dropOnTable(t.id,gid,f);}}/>
-                    {selected===t.id&&(
-                      <button
-                        onMouseDown={e=>e.stopPropagation()}
-                        onClick={e=>{e.stopPropagation();setEditTableData(t);}}
-                        style={{position:"absolute",top:-12,right:-12,zIndex:30,
-                          width:26,height:26,borderRadius:"50%",background:"#fff",
-                          border:`2px solid ${C.blueM}`,display:"flex",alignItems:"center",
-                          justifyContent:"center",cursor:"pointer",fontSize:12,
-                          boxShadow:"0 2px 8px rgba(0,0,0,0.25)"}}>✏️</button>
-                    )}
+                  {/* ─── במה — למעלה מרכז ─── */}
+                  <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",
+                    width:300,height:72,
+                    background:"linear-gradient(180deg,#4A1E8C,#7B3FD4)",
+                    borderRadius:"0 0 20px 20px",border:"3px solid #6B21A8",borderTop:"none",
+                    boxShadow:"0 6px 20px rgba(107,33,168,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:5}}>
+                    <div style={{position:"absolute",top:6,left:0,right:0,display:"flex",justifyContent:"space-around",padding:"0 20px"}}>
+                      {["#FF6B6B","#FFD700","#4ECDC4","#FF9FF3","#FFD700"].map((col,i)=>(
+                        <div key={i} style={{width:8,height:8,borderRadius:"50%",background:col,boxShadow:`0 0 8px ${col}`,opacity:0.9}}/>
+                      ))}
+                    </div>
+                    <div style={{textAlign:"center",marginTop:10}}>
+                      <div style={{fontSize:18,marginBottom:2}}>🎤✨</div>
+                      <div style={{fontSize:13,fontWeight:900,color:"#FFD700",letterSpacing:2,textShadow:"0 0 10px rgba(255,215,0,0.6)"}}>★ במה ★</div>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
+
+                  {/* ─── בר — צמוד לבמה מימין ─── */}
+                  <div style={{position:"absolute",top:0,left:"calc(50% + 150px)",
+                    width:140,height:72,
+                    background:"linear-gradient(160deg,#1A1A2E,#16213E,#0F3460)",
+                    borderRadius:"0 0 18px 0",border:"3px solid #E94560",borderTop:"none",borderLeft:"none",
+                    boxShadow:"0 6px 20px rgba(233,69,96,0.3)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:5,overflow:"hidden"}}>
+                    <div style={{position:"absolute",top:4,left:0,right:0,display:"flex",justifyContent:"center",gap:6}}>
+                      {["#FF6B9D","#C77DFF","#48CAE4"].map((col,i)=>(
+                        <div key={i} style={{width:6,height:6,borderRadius:"50%",background:col,boxShadow:`0 0 8px ${col}`}}/>
+                      ))}
+                    </div>
+                    <div style={{textAlign:"center",marginTop:6}}>
+                      <div style={{fontSize:18,marginBottom:2}}>🍸🥂</div>
+                      <div style={{fontSize:12,fontWeight:900,color:"#E94560",letterSpacing:2,textShadow:"0 0 8px rgba(233,69,96,0.8)"}}>BAR</div>
+                      <div style={{fontSize:9,color:"rgba(255,255,255,0.6)",fontWeight:600}}>open bar</div>
+                    </div>
+                  </div>
+
+                  {/* ─── כניסה — למטה מרכז, צמוד לקיר ─── */}
+                  <div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",
+                    width:140,height:36,background:"linear-gradient(180deg,#2C3E50,#34495E)",
+                    borderRadius:"12px 12px 0 0",border:"3px solid #1A252F",borderBottom:"none",
+                    display:"flex",alignItems:"center",justifyContent:"center",zIndex:5}}>
+                    <span style={{fontSize:12,fontWeight:800,color:"#fff",letterSpacing:1}}>🚪 כניסה</span>
+                  </div>
+
+                  {/* ─── שולחנות ─── */}
+                  {tables.map(t=>{
+                    let posX=t.x, posY=t.y;
+                    const hmd=e=>{
+                      e.stopPropagation();
+                      setSelected(t.id);
+                      const ox=e.clientX-posX, oy=e.clientY-posY;
+                      const mv=me=>{posX=me.clientX-ox;posY=me.clientY-oy;moveTablePos(t.id,posX,posY);};
+                      const up=()=>{saveTablePos(t.id,posX,posY);window.removeEventListener("mousemove",mv);window.removeEventListener("mouseup",up);};
+                      window.addEventListener("mousemove",mv);
+                      window.addEventListener("mouseup",up);
+                    };
+                    return(
+                      <div key={t.id} style={{position:"absolute",left:t.x,top:t.y,zIndex:selected===t.id?10:3}}>
+                        <TableNode table={t} selected={selected===t.id} onMouseDown={hmd}
+                          onDrop={e=>{const gid=e.dataTransfer.getData("guestId");const f=e.dataTransfer.getData("fromTable")||null;if(gid)dropOnTable(t.id,gid,f);}}/>
+                        {selected===t.id&&(
+                          <button onMouseDown={e=>e.stopPropagation()}
+                            onClick={e=>{e.stopPropagation();setEditTableData(t);}}
+                            style={{position:"absolute",top:-12,right:-12,zIndex:30,width:26,height:26,
+                              borderRadius:"50%",background:"#fff",border:`2px solid ${C.blueM}`,
+                              display:"flex",alignItems:"center",justifyContent:"center",
+                              cursor:"pointer",fontSize:12,boxShadow:"0 2px 8px rgba(0,0,0,0.25)"}}>✏️</button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
           <div style={{padding:"5px 16px",background:C.surface,borderTop:`1px solid ${C.border}`,display:"flex",gap:16,fontSize:11,color:C.muted,flexShrink:0}}>
             {Object.entries(TABLE_TYPES).map(([k,v])=><span key={k}>{v.icon} {v.label}</span>)}
