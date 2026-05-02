@@ -1819,7 +1819,7 @@ function SeatingApp({ user, event, onBack }) {
               <div style={{padding:"12px 16px",display:"flex",gap:10}}>
                 <button onClick={()=>setModal("addGuest")}
                   style={{flex:1,background:"#3D5475",color:"#fff",border:"none",borderRadius:50,padding:"12px",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                  ➕ הוסף מוזמן/ת
+                  ➕ הוסף מוזמנת
                 </button>
                 <button onClick={()=>{
                   exportToCSV(`אישורי_הגעה_${event.name}_${new Date().toLocaleDateString("he-IL")}.csv`,
@@ -2130,7 +2130,7 @@ function SeatingApp({ user, event, onBack }) {
                   <div style={{fontSize:11,color:"#999"}}>{g.phone||""}</div>
                 </div>
                 <span style={{fontSize:12,fontWeight:700,color:g.rsvp==="confirmed"?"#276749":"#C53030"}}>
-                  {g.rsvp==="confirmed"?"מגיע/ה":"לא מגיע/ה"}
+                  {g.rsvp==="confirmed"?"מגיעה":"לא מגיעה"}
                 </span>
               </div>
             ))}
@@ -2768,7 +2768,7 @@ function EventDetailsScreen({ event, sb, user, onLogout, onUpdate }) {
         <div style={{fontSize:12,color:"#718096",marginBottom:8}}>כדי להדגיש את הכתב בנוסח, הוסיפו 2 כוכביות משני צדי הטקסט ללא רווח, לדוגמה: **טקסט**</div>
 
         <div style={{marginTop:12}}>
-          <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:8}}>תצוגת שם אורח/ת בהזמנה אישית</div>
+          <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:8}}>תצוגת שם אורחת בהזמנה אישית</div>
           <div style={{fontSize:12,color:"#718096",marginBottom:8}}>בחרו האם להציג את שמות האורחים בהזמנה האישית בקישור שהם מקבלים:</div>
           <select value={form.name_display} onChange={e=>setForm(f=>({...f,name_display:e.target.value}))}
             style={{border:"1.5px solid #E2E8F0",borderRadius:10,padding:"9px 14px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#fff",color:"#1A202C",width:"fit-content"}}>
@@ -2986,7 +2986,7 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
           </button>
           <button onClick={onAddGuest}
             style={{background:"#2B6CB0",color:"#fff",border:"none",borderRadius:10,padding:"9px 18px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>
-            ➕ הוסף מוזמן/ת
+            ➕ הוסף מוזמנת
           </button>
           <button onClick={()=>{
             const allG=[...guests,...tables.flatMap(t=>(t.guests||[]).map(g=>({...g,tableName:t.name})))];
@@ -3166,8 +3166,8 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
                       color:g.rsvp==="confirmed"?"#276749":g.rsvp==="declined"?"#C53030":"#718096",
                       borderRadius:6,padding:"4px 3px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",outline:"none",width:"100%"}}>
                     <option value="pending">לא הופצה</option>
-                    <option value="confirmed">מגיע/ה ✓</option>
-                    <option value="declined">לא מגיע/ה ✗</option>
+                    <option value="confirmed">מגיעה ✓</option>
+                    <option value="declined">לא מגיעה ✗</option>
                   </select>
                 </td>
                 <td style={{padding:"11px 6px"}}>
@@ -3200,13 +3200,13 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setEditG(null)}>
           <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:20,padding:32,width:500,maxWidth:"95vw",direction:"rtl",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.2)"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-              <div style={{border:"1.5px solid #E2E8F0",borderRadius:20,padding:"5px 16px",fontSize:13,fontWeight:700,color:"#1A202C"}}>עריכת מוזמן/ת</div>
+              <div style={{border:"1.5px solid #E2E8F0",borderRadius:20,padding:"5px 16px",fontSize:13,fontWeight:700,color:"#1A202C"}}>עריכת מוזמנת</div>
               <button onClick={()=>setEditG(null)} style={{background:"#F7FAFC",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:18,color:"#718096",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
             </div>
 
             {/* שם */}
             <div style={{marginBottom:14}}>
-              <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:6}}>שם המוזמן/ת:</div>
+              <div style={{fontSize:12,color:"#718096",fontWeight:700,marginBottom:6}}>שם המוזמנת:</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                 <input value={editG.name?.split(" ").slice(1).join(" ")||""} 
                   onChange={e=>setEditG(g=>({...g,name:(g.name?.split(" ")[0]||"")+" "+e.target.value}))}
@@ -3258,8 +3258,8 @@ function DesktopRsvpTable({ guests, tables, event, sb, loadAll, setGuests, setTa
               <select value={editG.rsvp||"pending"} onChange={e=>setEditG(g=>({...g,rsvp:e.target.value}))}
                 style={{width:"100%",border:"1.5px solid #E2E8F0",borderRadius:10,padding:"10px 14px",fontSize:14,fontFamily:"inherit",outline:"none",background:"#fff"}}>
                 <option value="pending">לא הופצה הזמנה</option>
-                <option value="confirmed">מגיע/ה</option>
-                <option value="declined">לא מגיע/ה</option>
+                <option value="confirmed">מגיעה</option>
+                <option value="declined">לא מגיעה</option>
               </select>
             </div>
 
@@ -4186,7 +4186,7 @@ function WhatsAppScreen({ event, guests }) {
 
   const inviteUrl = `${window.location.origin}/#/invite/${event.invite_code||""}`;
 
-  const defaultInviteText=`שלום {שם} היקר/ה! 💌\n\n*${groomName} ו${brideName} מתחתנים!* 🎉\n\nאנחנו נרגשים להזמין אותך ליום המאושר בחיינו ונשמח מאוד לראותך שם!\n\n📅 *תאריך:* ${eventDate}\n📍 *מקום:* ${event.venue||"יפורסם בקרוב"}\n\n👇 *לאישור הגעה לחץ/י כאן:*\n{קישור}\n\nבאהבה 💍\n${groomName} ו${brideName}`;
+  const defaultInviteText=`שלום {שם} היקר-ה! 💌\n\n${groomName} ו${brideName} מתחתנים! 🎉\n\nאנחנו נרגשים להזמין אותך ליום המאושר בחיינו ונשמח מאוד לראותך שם!\n\n📅 תאריך: ${eventDate}\n📍 מקום: ${event.venue||"יפורסם בקרוב"}\n\n👇 לאישור הגעה לחצי כאן:\n{קישור}\n\nבאהבה 💍\n${groomName} ו${brideName}`;
   const inviteText=event.welcome_text?.trim()||defaultInviteText;
 
   const TEMPLATES = [
@@ -4198,17 +4198,17 @@ function WhatsAppScreen({ event, guests }) {
     {
       id:"reminder",
       label:"🔔 תזכורת לממתינים",
-      text:`שלום {שם}! 👋\n\nעוד לא אישרת הגעה לחתונה של *${groomName} ו${brideName}*.\nנשמח מאוד לדעת אם תוכל/י להגיע 🙏\n\n📅 *${eventDate}*\n\n👇 *לאישור הגעה לחץ/י כאן:*\n{קישור}\n\nמחכים לך! 💙`,
+      text:`שלום {שם}! 👋\n\nעוד לא אישרת הגעה לחתונה של ${groomName} ו${brideName}.\nנשמח מאוד לדעת אם תוכלי להגיע 🙏\n\n📅 ${eventDate}\n\n👇 לאישור הגעה לחצי כאן:\n{קישור}\n\nמחכים לך! 💙`,
     },
     {
       id:"table",
       label:"🪑 מספר שולחן",
-      text:`שלום {שם}! 🎊\n\nמחכים לך היום בחתונה של *${groomName} ו${brideName}*!\n\n🪑 *השולחן שלך: מספר {שולחן}*\n\n📅 ${eventDate}\n📍 ${event.venue||""}\n\n👇 לפרטים נוספים:\n{קישור}\n\nנתראה בקרוב! 🥂`,
+      text:`שלום {שם}! 🎊\n\nמחכים לך היום בחתונה של ${groomName} ו${brideName}!\n\n🪑 השולחן שלך: מספר {שולחן}\n\n📅 ${eventDate}\n📍 ${event.venue||""}\n\n👇 לפרטים נוספים:\n{קישור}\n\nנתראה בקרוב! 🥂`,
     },
     {
       id:"thanks",
       label:"💙 תודה אחרי האירוע",
-      text:`שלום {שם} היקר/ה! 💙\n\nתודה רבה שהגעת לחתונה שלנו!\nשמחנו כל כך לחגוג איתך את היום המיוחד הזה 🥰\n\nבאהבה רבה,\n*${groomName} ו${brideName}* 💍`,
+      text:`שלום {שם} היקר-ה! 💙\n\nתודה רבה שהגעת לחתונה שלנו!\nשמחנו כל כך לחגוג איתך את היום המיוחד הזה 🥰\n\nבאהבה רבה,\n${groomName} ו${brideName} 💍`,
     },
   ];
 
