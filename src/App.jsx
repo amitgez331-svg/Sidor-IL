@@ -2452,6 +2452,9 @@ function EventDetailsScreen({ event, sb, user, onLogout, onUpdate }) {
     welcome_text:event.welcome_text||"",
     personal_text:event.personal_text||"",
     name_display:event.name_display||"full",
+    invite_image:event.invite_image||"",
+    bit_link:event.bit_link||"",
+    paybox_link:event.paybox_link||"",
   });
   const [saving,setSaving]=useState(false);
   const [saved,setSaved]=useState(false);
@@ -2601,9 +2604,15 @@ function EventDetailsScreen({ event, sb, user, onLogout, onUpdate }) {
       <div style={{background:"#fff",borderRadius:14,padding:"24px",marginBottom:16,boxShadow:"0 1px 8px rgba(0,0,0,.05)"}}>
         <div style={{fontSize:15,fontWeight:800,color:"#1A202C",marginBottom:4,borderBottom:"1px solid #F7FAFC",paddingBottom:12}}>💌 נוסח להזמנה הדיגיטלית</div>
         <div style={{fontSize:12,color:"#718096",marginBottom:12}}>טקסט זה יחליף את הטקסט ברירת המחדל שיופיע בגוף ההזמנה הדיגיטלית. הטקסט יוצג בתבניות "דיגיטלי" ו"פורטרט" בלבד.</div>
-        <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,alignItems:"center"}}>
           <div style={{fontSize:12,color:"#718096",fontWeight:700}}>נוסח ההזמנה</div>
-          <div style={{fontSize:11,color:"#aaa"}}>{(form.welcome_text||"").length}/800</div>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            {form.welcome_text?.trim()&&<button onClick={()=>setForm(f=>({...f,welcome_text:""}))}
+              style={{fontSize:11,color:"#C53030",background:"#FFF5F5",border:"1px solid #FC8181",borderRadius:6,padding:"2px 8px",cursor:"pointer",fontFamily:"inherit"}}>
+              איפוס לברירת מחדל
+            </button>}
+            <div style={{fontSize:11,color:"#aaa"}}>{(form.welcome_text||"").length}/800</div>
+          </div>
         </div>
         <textarea value={form.welcome_text} onChange={e=>setForm(f=>({...f,welcome_text:e.target.value}))} maxLength={800}
           placeholder={"אנו שמחים להזמינכם לחגוג איתנו..."}
@@ -2621,6 +2630,80 @@ function EventDetailsScreen({ event, sb, user, onLogout, onUpdate }) {
             <option value="none">ללא שם</option>
           </select>
         </div>
+      </div>
+
+      {/* העלאת תמונת הזמנה */}
+      <div style={{background:"#fff",borderRadius:14,padding:"24px",marginBottom:16,boxShadow:"0 1px 8px rgba(0,0,0,.05)"}}>
+        <div style={{fontSize:15,fontWeight:800,color:"#1A202C",marginBottom:4,borderBottom:"1px solid #F7FAFC",paddingBottom:12}}>🖼️ תמונת הזמנה</div>
+        <div style={{fontSize:12,color:"#718096",marginBottom:14}}>העלה תמונת הזמנה שתופיע בהזמנה הדיגיטלית. התמונה תוצג מעל הטקסט.</div>
+
+        {/* תצוגה מקדימה */}
+        {form.invite_image&&(
+          <div style={{marginBottom:12,position:"relative",display:"inline-block"}}>
+            <img src={form.invite_image} alt="הזמנה" style={{maxWidth:"100%",maxHeight:200,borderRadius:10,objectFit:"contain",border:"1px solid #E2E8F0"}}
+              onError={e=>{e.target.style.display="none";}}/>
+            <button onClick={()=>setForm(f=>({...f,invite_image:""}))}
+              style={{position:"absolute",top:-8,right:-8,width:24,height:24,borderRadius:"50%",background:"#E53E3E",color:"#fff",border:"none",cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>×</button>
+          </div>
+        )}
+
+        {/* העלאה */}
+        <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+          <label style={{display:"flex",alignItems:"center",gap:8,padding:"10px 16px",background:C.blueXL,border:`1.5px solid ${C.border}`,borderRadius:10,cursor:"pointer",fontSize:13,fontWeight:700,color:C.blue}}>
+            📁 העלה מהמחשב
+            <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{
+              const file=e.target.files[0];
+              if(!file)return;
+              if(file.size>5*1024*1024){alert("הקובץ גדול מדי. מקסימום 5MB");return;}
+              const path=`invite_images/${event.id}_${Date.now()}.${file.name.split(".").pop()}`;
+              const{error}=await sb.storage.from("event-images").upload(path,file,{upsert:true});
+              if(error){alert("שגיאה בהעלאה: "+error.message);return;}
+              const{data}=sb.storage.from("event-images").getPublicUrl(path);
+              setForm(f=>({...f,invite_image:data.publicUrl}));
+            }}/>
+          </label>
+          <div style={{display:"flex",flex:1,gap:8}}>
+            <input value={form.invite_image} onChange={e=>setForm(f=>({...f,invite_image:e.target.value}))}
+              placeholder="או הכנס קישור לתמונה (URL)..."
+              style={{flex:1,border:"1.5px solid #E2E8F0",borderRadius:10,padding:"10px 12px",fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+          </div>
+        </div>
+      </div>
+
+      {/* קישורי תשלום — Bit / Paybox */}
+      <div style={{background:"#fff",borderRadius:14,padding:"24px",marginBottom:16,boxShadow:"0 1px 8px rgba(0,0,0,.05)"}}>
+        <div style={{fontSize:15,fontWeight:800,color:"#1A202C",marginBottom:4,borderBottom:"1px solid #F7FAFC",paddingBottom:12}}>💝 קישורי מתנה דיגיטלית</div>
+        <div style={{fontSize:12,color:"#718096",marginBottom:16}}>הוסף קישור לBit או Paybox — יופיע כפתור "תן מתנה" בהזמנה הדיגיטלית.</div>
+
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {/* Bit */}
+          <div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+              <div style={{width:28,height:28,borderRadius:8,background:"#1DB954",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>💚</div>
+              <div style={{fontSize:13,fontWeight:700,color:"#1A202C"}}>Bit</div>
+            </div>
+            <input value={form.bit_link} onChange={e=>setForm(f=>({...f,bit_link:e.target.value}))}
+              placeholder="https://bit.ly/... או מספר הטלפון"
+              style={{width:"100%",border:"1.5px solid #E2E8F0",borderRadius:10,padding:"10px 12px",fontSize:13,fontFamily:"inherit",outline:"none",boxSizing:"border-box",direction:"ltr"}}/>
+          </div>
+
+          {/* Paybox */}
+          <div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+              <div style={{width:28,height:28,borderRadius:8,background:"#6B46C1",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>💜</div>
+              <div style={{fontSize:13,fontWeight:700,color:"#1A202C"}}>Paybox</div>
+            </div>
+            <input value={form.paybox_link} onChange={e=>setForm(f=>({...f,paybox_link:e.target.value}))}
+              placeholder="https://payboxapp.com/..."
+              style={{width:"100%",border:"1.5px solid #E2E8F0",borderRadius:10,padding:"10px 12px",fontSize:13,fontFamily:"inherit",outline:"none",boxSizing:"border-box",direction:"ltr"}}/>
+          </div>
+        </div>
+
+        {(form.bit_link||form.paybox_link)&&(
+          <div style={{marginTop:14,background:"#F0FFF4",border:"1px solid #9AE6B4",borderRadius:10,padding:"10px 14px",fontSize:12,color:"#276749"}}>
+            ✅ כפתור "תן מתנה" יופיע בהזמנה הדיגיטלית
+          </div>
+        )}
       </div>
 
       {/* הגדרות נוספות */}
@@ -3591,11 +3674,14 @@ function SMSScreen({ event, guests }) {
 
   const inviteUrl = `${window.location.origin}/#/invite/${event.invite_code||""}`;
 
+  const defaultSmsInviteText=`שלום {שם}! 💌\n${groomName} ו${brideName} מתחתנים! 🎉\nנשמח לראותך ביום המאושר שלנו.\n📅 ${eventDate}\n📍 ${event.venue||"יפורסם בקרוב"}\nלאישור הגעה: {קישור}`;
+  const smsInviteText=event.welcome_text?.trim()||defaultSmsInviteText;
+
   const TEMPLATES = [
     {
       id:"invite",
       label:"💌 הזמנה לאירוע",
-      text:`שלום {שם}! 💌\n${groomName} ו${brideName} מתחתנים! 🎉\nנשמח לראותך ביום המאושר שלנו.\n📅 ${eventDate}\n📍 ${event.venue||"יפורסם בקרוב"}\nלאישור הגעה: {קישור}`,
+      text:smsInviteText,
     },
     {
       id:"reminder",
@@ -3621,11 +3707,18 @@ function SMSScreen({ event, guests }) {
   const [progress,setProgress]=useState(0);
   const [results,setResults]=useState(null);
   const [previewGuest,setPreviewGuest]=useState(null);
-  const [smsBalance,setSmsBalance]=useState(null); // null=טוען
+  const [smsBalance,setSmsBalance]=useState(null);
 
   useEffect(()=>{
     if(guests.length>0&&!previewGuest)setPreviewGuest(guests[0]);
   },[guests]);
+
+  // כשנוסח ההזמנה משתנה בפרטי האירוע — עדכן את ה-template
+  useEffect(()=>{
+    if(selectedTemplate==="invite"){
+      setMsgText(smsInviteText);
+    }
+  },[event.welcome_text]);
 
   // טעינת יתרת SMS מ-Supabase
   useEffect(()=>{
@@ -3940,11 +4033,14 @@ function WhatsAppScreen({ event, guests }) {
 
   const inviteUrl = `${window.location.origin}/#/invite/${event.invite_code||""}`;
 
+  const defaultInviteText=`שלום {שם} היקר/ה! 💌\n\n*${groomName} ו${brideName} מתחתנים!* 🎉\n\nאנחנו נרגשים להזמין אותך ליום המאושר בחיינו ונשמח מאוד לראותך שם!\n\n📅 *תאריך:* ${eventDate}\n📍 *מקום:* ${event.venue||"יפורסם בקרוב"}\n\n👇 *לאישור הגעה לחץ/י כאן:*\n{קישור}\n\nבאהבה 💍\n${groomName} ו${brideName}`;
+  const inviteText=event.welcome_text?.trim()||defaultInviteText;
+
   const TEMPLATES = [
     {
       id:"invite",
       label:"💌 הזמנה לאירוע",
-      text:`שלום {שם} היקר/ה! 💌\n\n*${groomName} ו${brideName} מתחתנים!* 🎉\n\nאנחנו נרגשים להזמין אותך ליום המאושר בחיינו ונשמח מאוד לראותך שם!\n\n📅 *תאריך:* ${eventDate}\n📍 *מקום:* ${event.venue||"יפורסם בקרוב"}\n\n👇 *לאישור הגעה לחץ/י כאן:*\n{קישור}\n\nבאהבה 💍\n${groomName} ו${brideName}`,
+      text:inviteText,
     },
     {
       id:"reminder",
@@ -3970,6 +4066,13 @@ function WhatsAppScreen({ event, guests }) {
   const [progress,setProgress]=useState(0);
   const [results,setResults]=useState(null);
   const [previewGuest,setPreviewGuest]=useState(null);
+
+  // כשנוסח ההזמנה משתנה בפרטי האירוע — עדכן את ה-template
+  useEffect(()=>{
+    if(selectedTemplate==="invite"){
+      setMsgText(inviteText);
+    }
+  },[event.welcome_text]);
 
   useEffect(()=>{
     if(guests.length>0&&!previewGuest)setPreviewGuest(guests[0]);
@@ -4567,6 +4670,15 @@ function InvitePage({ code, guestId }) {
       </div>
 
       <div style={{background:"#fff",maxWidth:480,margin:"0 auto",padding:"24px 20px",boxShadow:"0 -8px 30px rgba(0,0,0,.08)",borderRadius:"20px 20px 0 0",marginTop:-20,position:"relative"}}>
+
+        {/* תמונת הזמנה */}
+        {event.invite_image&&(
+          <div style={{marginBottom:20,borderRadius:14,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,.1)"}}>
+            <img src={event.invite_image} alt="הזמנה" style={{width:"100%",maxHeight:300,objectFit:"contain",display:"block"}}
+              onError={e=>{e.target.parentElement.style.display="none";}}/>
+          </div>
+        )}
+
         {event.welcome_text&&<p style={{fontSize:15,color:"#555",lineHeight:1.8,textAlign:"center",marginBottom:20,fontStyle:"italic"}}>"{event.welcome_text}"</p>}
 
         <div style={{borderTop:"1px solid #eee",borderBottom:"1px solid #eee",padding:"16px 0",marginBottom:20,textAlign:"center"}}>
@@ -4587,6 +4699,27 @@ function InvitePage({ code, guestId }) {
             <span style={{fontSize:22}}>🔗</span><span style={{fontSize:11,color:"#555",fontWeight:600}}>שתפו את האירוע</span>
           </button>
         </div>
+
+        {/* כפתורי מתנה — Bit / Paybox */}
+        {(event.bit_link||event.paybox_link)&&(
+          <div style={{marginBottom:24}}>
+            <div style={{fontSize:13,fontWeight:700,color:"#888",textAlign:"center",marginBottom:10}}>💝 שלח מתנה דיגיטלית</div>
+            <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+              {event.bit_link&&(
+                <a href={event.bit_link} target="_blank" rel="noopener"
+                  style={{display:"flex",alignItems:"center",gap:8,padding:"12px 20px",background:"linear-gradient(135deg,#1DB954,#17a347)",color:"#fff",borderRadius:14,textDecoration:"none",fontSize:14,fontWeight:800,boxShadow:"0 4px 14px rgba(29,185,84,.35)"}}>
+                  💚 Bit
+                </a>
+              )}
+              {event.paybox_link&&(
+                <a href={event.paybox_link} target="_blank" rel="noopener"
+                  style={{display:"flex",alignItems:"center",gap:8,padding:"12px 20px",background:"linear-gradient(135deg,#6B46C1,#553C9A)",color:"#fff",borderRadius:14,textDecoration:"none",fontSize:14,fontWeight:800,boxShadow:"0 4px 14px rgba(107,70,193,.35)"}}>
+                  💜 Paybox
+                </a>
+              )}
+            </div>
+          </div>
+        )}
 
         <div style={{background:"#f9f9f9",borderRadius:16,padding:20,marginBottom:20}}>
           <h3 style={{fontSize:20,fontWeight:900,color:"#111",textAlign:"center",marginBottom:4}}>אישור הגעה</h3>
