@@ -176,10 +176,10 @@ function TableNode({ table, selected, onMouseDown, onDrop }) {
   }
 
   // ─── עגול — סגנון עיטורים ─────────────────────────────────────────────────
-  const R=36;           // רדיוס עיגול ראשי — קטן יותר
-  const seatR=5;        // רדיוס כיסא
-  const seatDist=R+11;  // מרחק כיסאות מהמרכז
-  const S=R*2+seatDist+seatR*2+6; // גודל כולל
+  const R=42;           // רדיוס עיגול ראשי — קצת גדול יותר
+  const seatR=6;        // רדיוס כיסא
+  const seatDist=R+13;  // מרחק כיסאות מהמרכז
+  const S=R*2+seatDist+seatR*2+8; // גודל כולל
   const cx=S/2, cy=S/2;
 
   const tableNum=table.name?.match(/\d+/)?.[0]||"";
@@ -240,20 +240,21 @@ function TableNode({ table, selected, onMouseDown, onDrop }) {
 
       {/* טקסט מרכזי */}
       <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",
-        justifyContent:"center",flexDirection:"column",pointerEvents:"none",gap:0}}>
+        justifyContent:"center",flexDirection:"column",pointerEvents:"none",gap:1}}>
         {tableNum&&(
-          <span style={{fontSize:18,fontWeight:900,color:"#fff",lineHeight:1,
+          <span style={{fontSize:20,fontWeight:900,color:"#fff",lineHeight:1,
             textShadow:"0 1px 4px rgba(0,0,0,0.35)"}}>{tableNum}</span>
         )}
-        <span style={{fontSize:9,fontWeight:700,lineHeight:1.2,
+        <span style={{fontSize:10,fontWeight:700,lineHeight:1.2,
           color:pctFull>=1?"#FF5252":pctFull>0.8?"#FFE082":"rgba(255,255,255,0.95)",
           textShadow:"0 1px 2px rgba(0,0,0,0.3)"}}>
           {occupied} / {total}
         </span>
         {tableName&&(
-          <span style={{fontSize:7.5,fontWeight:700,color:"rgba(255,255,255,0.88)",
-            textAlign:"center",maxWidth:R*1.2,overflow:"hidden",whiteSpace:"nowrap",
-            textOverflow:"ellipsis",textShadow:"0 1px 2px rgba(0,0,0,0.3)",marginTop:1}}>
+          <span style={{fontSize:9,fontWeight:800,color:"#fff",
+            textAlign:"center",maxWidth:R*1.5,overflow:"hidden",
+            display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",
+            textShadow:"0 1px 3px rgba(0,0,0,0.5)",marginTop:1,lineHeight:1.3}}>
             {tableName}
           </span>
         )}
@@ -2173,7 +2174,7 @@ function SeatingApp({ user, event, onBack }) {
           <div onDragOver={e=>e.preventDefault()}
             onDrop={e=>{if(e.defaultPrevented)return;e.preventDefault();}}
             onClick={e=>{if(e.target===e.currentTarget)setSelected(null);}}
-            style={{flex:1,overflow:"auto",background:"#F8F6F0",display:"flex",alignItems:"flex-start",justifyContent:"flex-start"}}>
+            style={{flex:1,overflow:"auto",background:"#F8F6F0",position:"relative"}}>
             {(()=>{
               const MAP_W=1200,MAP_H=800;
               return(
@@ -2217,7 +2218,7 @@ function SeatingApp({ user, event, onBack }) {
                   </div>
 
                   {/* ─── בר — צמוד לבמה מימין ─── */}
-                  <div style={{position:"absolute",top:0,left:"calc(50% + 150px)",
+                  <div style={{position:"absolute",top:0,left:"calc(50% + 151px)",
                     width:140,height:72,
                     background:"linear-gradient(160deg,#1A1A2E,#16213E,#0F3460)",
                     borderRadius:"0 0 18px 0",border:"3px solid #E94560",borderTop:"none",borderLeft:"none",
