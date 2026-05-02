@@ -944,33 +944,11 @@ function LandingPage({ onOpenAuth, onLogout }) {
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section style={{padding:"88px 6vw",background:C.bg}} id="features">
-        <div style={{maxWidth:1080,margin:"0 auto"}}>
-          <div className="fu" style={{opacity:0,transform:"translateY(22px)",transition:"opacity .6s,transform .6s",marginBottom:52}}>
-            <div style={{display:"inline-block",fontSize:12,fontWeight:700,color:C.blueL,background:C.blueXL,border:`1px solid rgba(74,122,255,.25)`,borderRadius:100,padding:"5px 16px",marginBottom:12}}>פיצ'רים</div>
-            <h2 style={{fontFamily:"'Syne',sans-serif",fontSize:"clamp(26px,3.3vw,44px)",fontWeight:800,color:C.text,marginBottom:12}}>פיצ'רים, אבל באמת שווים</h2>
-            <p style={{fontSize:16,color:C.muted,maxWidth:500}}>וזה רק חלק קטן מאוסף היכולות שניתן להגדיר עבור האירוע שלכם.</p>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:20}}>
-            {[["🪑","סידורי הושבה","כלי דיגיטלי ומהיר לסידורי שולחנות וניהול האורחים כולל עדכוני הגעה בזמן אמת."],["✅","אישורי הגעה","קליק אחד והאורחים מאשרים הגעה בכל מקום ובכל זמן. SMS ווואטסאפ."],["🖨️","פתק הושבה","חפש שם אורח — קבל פתק מיידי עם מספר שולחן. כמו קיוסק מקצועי."],["📊","ייבוא מאנשי קשר","באמצעות האפליקציה ניתן להעלות אורחים ישירות מאנשי הקשר בנייד."],["🤖","AI חכם","תאר מי לא יושב עם מי — ה-AI יסדר הכל תוך שניות."],["📱","התראות בזמן אמת","קבל התראות כאשר אורח מאשר הגעה או מעדכן את מצב הגעתו."]].map(([icon,title,desc],i)=>(
-              <div key={title} className="fu" style={{opacity:0,transform:"translateY(22px)",transition:`opacity .6s ${i*.07}s,transform .6s ${i*.07}s`,background:C.surface,border:`1px solid ${C.border}`,borderRadius:20,padding:26}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-5px)";e.currentTarget.style.borderColor=C.blueL;}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.borderColor=C.border;}}>
-                <div style={{width:52,height:52,borderRadius:15,background:`linear-gradient(135deg,${C.blue},${C.blueL})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:23,marginBottom:16}}>{icon}</div>
-                <div style={{fontWeight:800,fontSize:16,color:C.text,marginBottom:7}}>{title}</div>
-                <div style={{fontSize:14,color:C.muted,lineHeight:1.7}}>{desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* HOW */}
       <section style={{padding:"88px 6vw",position:"relative",overflow:"hidden"}} id="how">
         {/* רקע — שולחנות הושבה מטושטשים */}
         <div style={{position:"absolute",inset:0,zIndex:0}}>
-          {/* רקע כחול בסיסי */}
           <div style={{position:"absolute",inset:0,background:`linear-gradient(145deg,${C.blue}F5,#122e9eF5,#1a4ac4F5)`}}/>
-          {/* שולחנות SVG מטושטשים */}
           <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:0.12,filter:"blur(1px)"}} xmlns="http://www.w3.org/2000/svg">
             {[
               {cx:120,cy:120,r:55},{cx:320,cy:200,r:65},{cx:550,cy:130,r:50},
@@ -981,10 +959,8 @@ function LandingPage({ onOpenAuth, onLogout }) {
               {cx:830,cy:570,r:62},{cx:1050,cy:550,r:57},{cx:1250,cy:580,r:60},
             ].map((t,i)=>(
               <g key={i}>
-                {/* שולחן עגול */}
                 <circle cx={t.cx} cy={t.cy} r={t.r} fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="3"/>
                 <circle cx={t.cx} cy={t.cy} r={t.r-8} fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1" strokeDasharray="6 4"/>
-                {/* כיסאות */}
                 {Array.from({length:8},(_,j)=>{
                   const a=(j/8)*Math.PI*2-Math.PI/2;
                   const sr=t.r+12;
@@ -1012,6 +988,26 @@ function LandingPage({ onOpenAuth, onLogout }) {
         </div>
       </section>
 
+      {/* FEATURES */}
+      <section style={{padding:"88px 6vw",background:C.bg}} id="features">
+        <div style={{maxWidth:1080,margin:"0 auto"}}>
+          <div className="fu" style={{opacity:0,transform:"translateY(22px)",transition:"opacity .6s,transform .6s",marginBottom:52}}>
+            <div style={{display:"inline-block",fontSize:12,fontWeight:700,color:C.blueL,background:C.blueXL,border:`1px solid rgba(74,122,255,.25)`,borderRadius:100,padding:"5px 16px",marginBottom:12}}>פיצ'רים</div>
+            <h2 style={{fontFamily:"'Syne',sans-serif",fontSize:"clamp(26px,3.3vw,44px)",fontWeight:800,color:C.text,marginBottom:12}}>פיצ'רים, אבל באמת שווים</h2>
+            <p style={{fontSize:16,color:C.muted,maxWidth:500}}>וזה רק חלק קטן מאוסף היכולות שניתן להגדיר עבור האירוע שלכם.</p>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:20}}>
+            {[["🪑","סידורי הושבה","כלי דיגיטלי ומהיר לסידורי שולחנות וניהול האורחים כולל עדכוני הגעה בזמן אמת."],["✅","אישורי הגעה","קליק אחד והאורחים מאשרים הגעה בכל מקום ובכל זמן. SMS ווואטסאפ."],["🖨️","פתק הושבה","חפש שם אורח — קבל פתק מיידי עם מספר שולחן. כמו קיוסק מקצועי."],["📊","ייבוא מאנשי קשר","באמצעות האפליקציה ניתן להעלות אורחים ישירות מאנשי הקשר בנייד."],["🤖","AI חכם","בחר קטגוריות, תאר העדפות הושבה, וה-AI יסדר אוטומטית לפי קטגוריות ושולחנות ריקים — תוך שניות."],["📱","התראות בזמן אמת","קבל התראות כאשר אורח מאשר הגעה או מעדכן את מצב הגעתו."]].map(([icon,title,desc],i)=>(
+              <div key={title} className="fu" style={{opacity:0,transform:"translateY(22px)",transition:`opacity .6s ${i*.07}s,transform .6s ${i*.07}s`,background:C.surface,border:`1px solid ${C.border}`,borderRadius:20,padding:26}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-5px)";e.currentTarget.style.borderColor=C.blueL;}} onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.borderColor=C.border;}}>
+                <div style={{width:52,height:52,borderRadius:15,background:`linear-gradient(135deg,${C.blue},${C.blueL})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:23,marginBottom:16}}>{icon}</div>
+                <div style={{fontWeight:800,fontSize:16,color:C.text,marginBottom:7}}>{title}</div>
+                <div style={{fontSize:14,color:C.muted,lineHeight:1.7}}>{desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* FEATURES SHOWCASE — במקום חבילות */}
       <section style={{padding:"88px 6vw",background:C.bg,textAlign:"center"}} id="pricing">
         <div style={{maxWidth:1080,margin:"0 auto"}}>
@@ -1021,73 +1017,31 @@ function LandingPage({ onOpenAuth, onLogout }) {
             <p style={{fontSize:16,color:C.muted,lineHeight:1.8}}>הכלים שיהפכו את ניהול האירוע שלך לחוויה קלה, מהנה ומקצועית.</p>
           </div>
 
-          {/* 3 פיצ'רים גדולים */}
-          <div style={{display:"flex",flexDirection:"column",gap:20,marginBottom:40}}>
+          {/* 3 פיצ'רים עיקריים + 3 נוספים — כרטיסים קטנים אחידים */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16,marginBottom:44}}>
             {[
-              {
-                icon:"🪑", color:C.blue, bg:C.blueXL,
-                title:"סידורי הושבה חכמים",
-                desc:"מפה אינטראקטיבית של האולם עם גרירת אורחים לשולחנות בקלות. שולחנות עגולים, מרובעים ואבירים. AI שמסדר הכל תוך שניות לפי ההעדפות שלך.",
-                features:["🗺️ מפה חיה של האולם","🤖 AI שמסדר אוטומטית","🪑 שולחנות בכל צורה","🖨️ פתק הושבה להדפסה","📊 סטטיסטיקות מלאות"],
-              },
-              {
-                icon:"💬", color:"#25D366", bg:"#F0FFF4",
-                title:"WhatsApp + SMS לכל אורח",
-                desc:"שלח הזמנות אישיות עם שם האורח ישירות לוואטסאפ או SMS. תזמן תזכורות, שלח מספר שולחן ביום האירוע, וקבל אישורי הגעה בלחיצה אחת.",
-                features:["💌 הזמנה אישית לכל אורח","🔔 תזכורות אוטומטיות","🪑 שליחת מספר שולחן","✅ אישור הגעה בקליק","📈 מעקב בזמן אמת"],
-              },
-              {
-                icon:"✅", color:C.success, bg:"#F0FFF6",
-                title:"אישורי הגעה דיגיטליים",
-                desc:"הזמנה דיגיטלית מרהיבה עם קישור אישי לכל אורח. האורח מאשר הגעה, בוחר כמות מגיעים — והמערכת מתעדכנת אוטומטית בזמן אמת.",
-                features:["🎨 הזמנה דיגיטלית יפה","🔗 קישור אישי לכל אורח","👥 בחירת כמות מגיעים","⚡ עדכון בזמן אמת","📱 עובד מכל מכשיר"],
-              },
-            ].map((item,i)=>(
-              <Card key={item.title} className="fu"
-                style={{opacity:0,transform:"translateY(22px)",transition:`opacity .6s ${i*.1}s,transform .6s ${i*.1}s`,
-                  padding:"32px 36px",display:"flex",alignItems:"flex-start",gap:28,
-                  border:`1.5px solid ${C.border}`,textAlign:"right"}}>
-                <div style={{width:64,height:64,borderRadius:20,background:item.bg,
-                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,flexShrink:0,
-                  border:`2px solid ${item.color}22`}}>
-                  {item.icon}
-                </div>
-                <div style={{flex:1}}>
-                  <h3 style={{fontFamily:"'Syne',sans-serif",fontSize:20,fontWeight:800,color:C.text,marginBottom:8}}>{item.title}</h3>
-                  <p style={{fontSize:14,color:C.muted,lineHeight:1.8,marginBottom:16}}>{item.desc}</p>
-                  <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-                    {item.features.map(f=>(
-                      <span key={f} style={{fontSize:13,color:item.color,background:item.bg,
-                        borderRadius:100,padding:"4px 12px",fontWeight:700,border:`1px solid ${item.color}22`}}>
-                        {f}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* 3 פיצ'רים קטנים נוספים */}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:16,marginBottom:44}}>
-            {[
-              {icon:"🤖",title:"AI סידור חכם",desc:"תאר מי לא יושב עם מי — AI יסדר הכל תוך שניות",color:"#7B3FD4",bg:"#F5F0FF"},
-              {icon:"📊",title:"ייבוא מ-Excel",desc:"העלה רשימת אורחים בקובץ Excel תוך שניות",color:"#276749",bg:"#F0FFF4"},
-              {icon:"🖨️",title:"פתק הושבה",desc:"חפש שם — קבל פתק מיידי עם מספר שולחן",color:C.blue,bg:C.blueXL},
-              {icon:"💳",title:"מתנות דיגיטליות",desc:"אורחים נותנים מתנה בקליק אחד, בלי מזומן",color:C.gold,bg:"#FFF8E1"},
-              {icon:"📈",title:"סטטיסטיקות חיות",desc:"כמה אישרו, כמה ממתינים, כמה לא מגיעים",color:"#C53030",bg:"#FFF5F5"},
-              {icon:"🔔",title:"התראות בזמן אמת",desc:"קבל התראה כשאורח מאשר הגעה — מיד",color:"#DD6B20",bg:"#FFFAF0"},
+              {icon:"🪑",title:"סידורי הושבה חכמים",desc:"מפה אינטראקטיבית של האולם עם גרירת אורחים לשולחנות. שולחנות עגולים, מרובעים ואבירים. פתק הושבה להדפסה מיידית.",color:C.blue,bg:C.blueXL,tags:["🗺️ מפה חיה","🪑 שולחנות בכל צורה","🖨️ פתק הושבה","📊 סטטיסטיקות"]},
+              {icon:"💬",title:"WhatsApp + SMS לכל אורח",desc:"שלח הזמנות אישיות עם שם האורח לוואטסאפ או SMS. תזכורות אוטומטיות ושליחת מספר שולחן ביום האירוע.",color:"#25D366",bg:"#F0FFF4",tags:["💌 הזמנה אישית","🔔 תזכורות אוטומטיות","🪑 שליחת שולחן","📈 מעקב בזמן אמת"]},
+              {icon:"✅",title:"אישורי הגעה דיגיטליים",desc:"הזמנה דיגיטלית יפה עם קישור אישי לכל אורח. האורח מאשר הגעה ובוחר כמות מגיעים — המערכת מתעדכנת אוטומטית.",color:C.success,bg:"#F0FFF6",tags:["🎨 הזמנה יפה","🔗 קישור אישי","👥 כמות מגיעים","⚡ עדכון בזמן אמת"]},
+              {icon:"🤖",title:"AI סידור חכם",desc:"בחר קטגוריות, תאר מי לא יושב עם מי, ו-AI יחלק אוטומטית לפי קטגוריות ושולחנות ריקים — תוך שניות.",color:"#7B3FD4",bg:"#F5F0FF",tags:["🏷️ סידור לפי קטגוריות","🪑 מילוי שולחנות ריקים","⚡ תוך שניות"]},
+              {icon:"📊",title:"ייבוא מ-Excel",desc:"העלה רשימת אורחים בקובץ Excel תוך שניות — שם, טלפון, כמות. ללא הקלדה ידנית.",color:"#276749",bg:"#F0FFF4",tags:["📂 Excel / CSV","⚡ ייבוא מיידי"]},
+              {icon:"🖨️",title:"פתק הושבה",desc:"חפש שם אורח — קבל פתק מיידי עם מספר שולחן. כמו קיוסק מקצועי ביום האירוע.",color:C.blue,bg:C.blueXL,tags:["🔍 חיפוש מהיר","🖨️ הדפסה מיידית","📱 עובד מהנייד"]},
             ].map((f,i)=>(
               <div key={f.title} className="fu"
                 style={{opacity:0,transform:"translateY(22px)",transition:`opacity .6s ${i*.07}s,transform .6s ${i*.07}s`,
-                  background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:"20px",textAlign:"right"}}
-                onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)";e.currentTarget.style.borderColor=f.color+"66";}}
-                onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.borderColor=C.border;}}>
-                <div style={{width:44,height:44,borderRadius:12,background:f.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,marginBottom:12}}>
+                  background:C.surface,border:`1px solid ${C.border}`,borderRadius:20,padding:"24px",textAlign:"right"}}
+                onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-5px)";e.currentTarget.style.borderColor=f.color+"66";e.currentTarget.style.boxShadow=`0 8px 24px ${f.color}18`;}}
+                onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.borderColor=C.border;e.currentTarget.style.boxShadow="none";}}>
+                <div style={{width:52,height:52,borderRadius:15,background:f.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,marginBottom:14,border:`1.5px solid ${f.color}22`}}>
                   {f.icon}
                 </div>
-                <div style={{fontSize:14,fontWeight:800,color:C.text,marginBottom:5}}>{f.title}</div>
-                <div style={{fontSize:12,color:C.muted,lineHeight:1.6}}>{f.desc}</div>
+                <div style={{fontSize:16,fontWeight:800,color:C.text,marginBottom:8}}>{f.title}</div>
+                <div style={{fontSize:13,color:C.muted,lineHeight:1.7,marginBottom:14}}>{f.desc}</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                  {f.tags.map(t=>(
+                    <span key={t} style={{fontSize:11,color:f.color,background:f.bg,borderRadius:100,padding:"3px 10px",fontWeight:700,border:`1px solid ${f.color}22`}}>{t}</span>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
