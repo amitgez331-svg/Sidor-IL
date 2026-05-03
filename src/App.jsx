@@ -1506,6 +1506,7 @@ function MobileRsvpScreen({ guests, tables, event, sb, setGuests, setTables, set
   const confirmed=allGuests.filter(g=>g.rsvp==="confirmed").reduce((s,g)=>s+(g.guest_count||1),0);
   const declined=allGuests.filter(g=>g.rsvp==="declined").reduce((s,g)=>s+(g.guest_count||1),0);
   const [statusModal,setStatusModal]=useState(null);
+  const [editModal,setEditModal]=useState(null);
   const [search,setSearch]=useState("");
   const filtered=allGuests.filter(g=>!search||g.name?.includes(search)||g.phone?.includes(search));
 
@@ -1522,7 +1523,48 @@ function MobileRsvpScreen({ guests, tables, event, sb, setGuests, setTables, set
 
   return(
     <div style={{direction:"rtl",fontFamily:"'Heebo',sans-serif",paddingBottom:80}}>
-      {statusModal&&(
+      {/* מודל עריכת אורח */}
+      {editModal&&(
+        <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setEditModal(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:20,padding:24,width:"100%",maxWidth:360,direction:"rtl"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+              <div style={{fontSize:16,fontWeight:900,color:"#1a1a1a"}}>{editModal.name}</div>
+              <button onClick={()=>setEditModal(null)} style={{width:30,height:30,borderRadius:"50%",border:"1px solid #eee",background:"#f5f5f5",cursor:"pointer",fontSize:16,fontWeight:900}}>×</button>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:12}}>
+              <div style={{background:"#f9f9f9",borderRadius:12,padding:"12px 16px"}}>
+                <div style={{fontSize:11,color:"#888",marginBottom:4}}>טלפון</div>
+                <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a"}}>{editModal.phone||"לא הוזן"}</div>
+              </div>
+              <div style={{background:"#f9f9f9",borderRadius:12,padding:"12px 16px"}}>
+                <div style={{fontSize:11,color:"#888",marginBottom:4}}>כמות מגיעים</div>
+                <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a"}}>{editModal.guest_count||1}</div>
+              </div>
+              <div style={{background:"#f9f9f9",borderRadius:12,padding:"12px 16px"}}>
+                <div style={{fontSize:11,color:"#888",marginBottom:4}}>קטגוריה</div>
+                <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a"}}>{editModal.relation||"לא הוגדר"}</div>
+              </div>
+              <div style={{background:"#f9f9f9",borderRadius:12,padding:"12px 16px"}}>
+                <div style={{fontSize:11,color:"#888",marginBottom:4}}>סטטוס הגעה</div>
+                <div style={{fontSize:14,fontWeight:700,color:rsvpColor(editModal.rsvp)}}>{rsvpLabel(editModal.rsvp)}</div>
+              </div>
+              <button onClick={()=>{setStatusModal(editModal);setEditModal(null);}}
+                style={{background:"#3D5475",color:"#fff",border:"none",borderRadius:12,padding:"13px",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>
+                ✏️ שנה סטטוס הגעה
+              </button>
+              <button onClick={async()=>{
+                if(!window.confirm(`למחוק את "${editModal.name}"?`))return;
+                await sb.from("guests").delete().eq("id",editModal.id);
+                setGuests(gs=>gs.filter(x=>x.id!==editModal.id));
+                setTables(ts=>ts.map(t=>({...t,guests:(t.guests||[]).filter(x=>x.id!==editModal.id)})));
+                setEditModal(null);
+              }} style={{background:"#FFF5F5",color:"#C53030",border:"1px solid #FED7D7",borderRadius:12,padding:"13px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                🗑️ מחק אורח
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
         <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setStatusModal(null)}>
           <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:20,padding:24,width:"100%",maxWidth:360,direction:"rtl"}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
@@ -1564,9 +1606,10 @@ function MobileRsvpScreen({ guests, tables, event, sb, setGuests, setTables, set
           {["שם מלא","טלפון","סטטוס"].map(h=>(<div key={h} style={{fontSize:11,fontWeight:800,color:"#555",textAlign:"center"}}>{h}</div>))}
         </div>
         {filtered.map((g,i)=>(
-          <div key={g.id} onClick={()=>setStatusModal(g)}
-            style={{display:"grid",gridTemplateColumns:"1fr 90px 80px",padding:"11px 14px",borderBottom:i<filtered.length-1?"1px solid #f0f0f0":"none",cursor:"pointer",background:i%2===0?"#fff":"#fafafa",alignItems:"center"}}>
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <div key={g.id}
+            style={{display:"grid",gridTemplateColumns:"1fr 90px 80px",padding:"11px 14px",borderBottom:i<filtered.length-1?"1px solid #f0f0f0":"none",background:i%2===0?"#fff":"#fafafa",alignItems:"center"}}>
+            {/* שם — לחיצה פותחת פרטים מלאים */}
+            <div onClick={()=>setEditModal(g)} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
               <div style={{width:26,height:26,borderRadius:"50%",background:"linear-gradient(135deg,#1B3A8C,#4A7AFF)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,flexShrink:0}}>{g.name?.[0]}</div>
               <div>
                 <div style={{fontSize:12,fontWeight:700,color:"#1a1a1a",lineHeight:1.2}}>{g.name}</div>
@@ -1574,7 +1617,8 @@ function MobileRsvpScreen({ guests, tables, event, sb, setGuests, setTables, set
               </div>
             </div>
             <div style={{fontSize:10,color:"#666",textAlign:"center",direction:"ltr"}}>{g.phone||"—"}</div>
-            <div style={{textAlign:"center"}}>
+            {/* סטטוס — לחיצה פותחת שינוי סטטוס */}
+            <div onClick={()=>setStatusModal(g)} style={{textAlign:"center",cursor:"pointer"}}>
               <span style={{fontSize:10,fontWeight:700,color:rsvpColor(g.rsvp),background:rsvpBg(g.rsvp),borderRadius:50,padding:"3px 8px",whiteSpace:"nowrap"}}>{rsvpLabel(g.rsvp)}</span>
             </div>
           </div>
