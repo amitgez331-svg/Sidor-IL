@@ -900,7 +900,7 @@ function LandingPage({ onOpenAuth, onLogout }) {
               <button onClick={()=>onOpenAuth("register")} style={{background:C.blue,color:"#fff",border:`2px solid ${C.blue}`,borderRadius:8,padding:"13px 30px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>הזמנה דיגיטלית בחינם ›</button>
               <button onClick={()=>onOpenAuth("login")} style={{background:"transparent",color:C.blue,border:`2px solid ${C.blue}`,borderRadius:8,padding:"13px 22px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>כניסה למערכת ›</button>
             </div>
-            <div style={{display:"flex",gap:24,flexWrap:"nowrap",justifyContent:"flex-end"}}>
+            <div style={{display:"flex",gap:24,flexWrap:"nowrap",justifyContent:"flex-start"}}>
               {[["✅","אישורי הגעה","בוואטסאפ"],["🪑","סידורי הושבה","מלאים"],["💌","הזמנה","דיגיטלית"]].map(([ic,t,s])=>(
                 <div key={t} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,flex:"0 0 auto"}}>
                   <div style={{width:76,height:76,borderRadius:"50%",border:`2px solid ${C.border}`,background:"rgba(255,255,255,.95)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,boxShadow:"0 4px 16px rgba(27,58,140,.12)",transition:"all .2s"}}
@@ -1807,10 +1807,10 @@ function SeatingApp({ user, event, onBack }) {
                     ➕ הוסף מוזמן
                   </button>
                   <button onClick={()=>{
-                    exportToCSV(`אישורי_הגעה.csv`,
-                      ["שם מלא","טלפון","סטטוס","כמות","שולחן"],
-                      allGuests.map(g=>[g.name,g.phone||"",g.rsvp==="confirmed"?"מגיע":g.rsvp==="declined"?"לא מגיע":"ממתין",g.guest_count||1,""])
-                    );
+                    const BOM="\uFEFF";
+                    const rows=[["שם מלא","טלפון","סטטוס","כמות"],...allGuests.map(g=>[g.name,g.phone||"",g.rsvp==="confirmed"?"מגיע":g.rsvp==="declined"?"לא מגיע":"ממתין",g.guest_count||1])];
+                    const csv=BOM+rows.map(r=>r.map(c=>`"${String(c||"").replace(/"/g,'""')}"`).join(",")).join("\n");
+                    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));a.download="אישורי_הגעה.csv";a.click();
                   }} style={{background:"#276749",color:"#fff",border:"none",borderRadius:50,padding:"10px 16px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>
                     📥
                   </button>
@@ -3352,63 +3352,56 @@ function BudgetScreen({ event }) {
         ))}
       </div>
 
-      {/* טבלה  -  מקצה לקצה */}
+      {/* טבלה */}
       <div style={{background:"#fff",boxShadow:"0 2px 16px rgba(0,0,0,.08)",overflowX:"auto",borderTop:"2px solid #C3D3F5",borderBottom:"2px solid #C3D3F5",width:"100%"}}>
-        <table style={{width:"100%",minWidth:600,borderCollapse:"collapse",fontSize:14}}>
+        <table style={{width:"100%",minWidth:480,borderCollapse:"collapse",fontSize:12}}>
           <thead>
             <tr style={{background:"#1B3A8C",borderBottom:"3px solid #122e70"}}>
-              <th style={{padding:"13px 16px",textAlign:"right",fontWeight:800,color:"#fff",fontSize:13}}>מוצר / שירות</th>
-              <th style={{padding:"13px 12px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:13,borderRight:"1px solid rgba(255,255,255,.15)"}}>סוג</th>
-              <th style={{padding:"13px 12px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:13,borderRight:"1px solid rgba(255,255,255,.15)"}}>סכום</th>
-              <th style={{padding:"13px 12px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:13,borderRight:"1px solid rgba(255,255,255,.15)"}}>מקדמה</th>
-              <th style={{padding:"13px 12px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:13,borderRight:"1px solid rgba(255,255,255,.15)"}}>נשאר</th>
-              <th style={{padding:"13px 12px",textAlign:"right",fontWeight:800,color:"#fff",fontSize:13,borderRight:"1px solid rgba(255,255,255,.15)"}}>קטגוריה</th>
-              <th style={{padding:"13px 12px",textAlign:"right",fontWeight:800,color:"#fff",fontSize:13,borderRight:"1px solid rgba(255,255,255,.15)"}}>פעולות</th>
+              <th style={{padding:"10px 12px",textAlign:"right",fontWeight:800,color:"#fff",fontSize:12}}>מוצר</th>
+              <th style={{padding:"10px 8px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:12,borderRight:"1px solid rgba(255,255,255,.15)"}}>סוג</th>
+              <th style={{padding:"10px 8px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:12,borderRight:"1px solid rgba(255,255,255,.15)"}}>סכום</th>
+              <th style={{padding:"10px 8px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:12,borderRight:"1px solid rgba(255,255,255,.15)"}}>מקדמה</th>
+              <th style={{padding:"10px 8px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:12,borderRight:"1px solid rgba(255,255,255,.15)"}}>נשאר</th>
+              <th style={{padding:"10px 8px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:12}}>פעולות</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length===0&&(
-              <tr><td colSpan={7} style={{padding:"40px",textAlign:"center",color:"#aaa",fontSize:14}}>אין נתונים בטבלה</td></tr>
+              <tr><td colSpan={6} style={{padding:"40px",textAlign:"center",color:"#aaa",fontSize:14}}>אין נתונים בטבלה</td></tr>
             )}
             {filtered.map(item=>{
               const catColor=CAT_COLORS[item.category]||"#718096";
               const remain=Number(item.amount||0)-Number(item.advance||0);
               return(
-                <tr key={item.id} style={{borderBottom:"2px solid #E2E8F0",background:catColor+"12",transition:"filter .1s"}}
+                <tr key={item.id} style={{borderBottom:"1px solid #E2E8F0",background:catColor+"10",transition:"filter .1s"}}
                   onMouseEnter={e=>e.currentTarget.style.filter="brightness(.96)"}
                   onMouseLeave={e=>e.currentTarget.style.filter="none"}>
-                  <td style={{padding:"13px 16px",borderRight:"1px solid #E2E8F0"}}>
-                    <div style={{fontWeight:800,color:"#1A202C",fontSize:15}}>{item.name}</div>
-                    {item.note&&<div style={{fontSize:11,color:"#718096",marginTop:2}}>{item.note}</div>}
+                  <td style={{padding:"10px 12px",borderRight:"1px solid #E2E8F0",maxWidth:140}}>
+                    <div style={{fontWeight:800,color:"#1A202C",fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.name}</div>
+                    {item.note&&<div style={{fontSize:10,color:"#718096",marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.note}</div>}
                   </td>
-                  <td style={{padding:"13px 12px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
-                    <span style={{background:item.type==="expense"?"#FFF5F5":"#F0FFF4",color:item.type==="expense"?"#C53030":"#276749",border:`1.5px solid ${item.type==="expense"?"#FEB2B2":"#9AE6B4"}`,borderRadius:20,padding:"3px 12px",fontSize:12,fontWeight:700}}>
-                      {item.type==="expense"?"הוצאה":"הכנסה"}
+                  <td style={{padding:"10px 8px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
+                    <span style={{background:item.type==="expense"?"#FFF5F5":"#F0FFF4",color:item.type==="expense"?"#C53030":"#276749",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:700}}>
+                      {item.type==="expense"?"הוצ'":"הכנ'"}
                     </span>
                   </td>
-                  <td style={{padding:"13px 12px",textAlign:"center",fontWeight:800,fontSize:15,color:item.type==="expense"?"#C53030":"#276749",borderRight:"1px solid #E2E8F0"}}>
+                  <td style={{padding:"10px 8px",textAlign:"center",fontWeight:800,fontSize:13,color:item.type==="expense"?"#C53030":"#276749",borderRight:"1px solid #E2E8F0"}}>
                     ₪{Number(item.amount||0).toLocaleString()}
                   </td>
-                  <td style={{padding:"13px 12px",textAlign:"center",fontWeight:700,fontSize:14,color:"#2D3748",borderRight:"1px solid #E2E8F0"}}>
-                    {Number(item.advance||0)>0?<span style={{color:"#276749"}}>₪{Number(item.advance).toLocaleString()}</span>:<span style={{color:"#CBD5E0"}}> - </span>}
+                  <td style={{padding:"10px 8px",textAlign:"center",fontWeight:700,fontSize:13,color:"#2D3748",borderRight:"1px solid #E2E8F0"}}>
+                    {Number(item.advance||0)>0?<span style={{color:"#276749"}}>₪{Number(item.advance).toLocaleString()}</span>:<span style={{color:"#CBD5E0"}}>-</span>}
                   </td>
-                  <td style={{padding:"13px 12px",textAlign:"center",fontWeight:700,fontSize:14,borderRight:"1px solid #E2E8F0"}}>
-                    {remain>0?<span style={{color:"#C53030",fontWeight:800}}>₪{remain.toLocaleString()}</span>:<span style={{color:"#276749",fontWeight:800}}>שולם ✓</span>}
+                  <td style={{padding:"10px 8px",textAlign:"center",fontWeight:700,fontSize:13,borderRight:"1px solid #E2E8F0"}}>
+                    {remain>0?<span style={{color:"#C53030",fontWeight:800}}>₪{remain.toLocaleString()}</span>:<span style={{color:"#276749",fontWeight:800}}>✓</span>}
                   </td>
-                  <td style={{padding:"13px 12px",borderRight:"1px solid #E2E8F0"}}>
-                    <span style={{display:"inline-flex",alignItems:"center",gap:5,background:catColor+"25",border:`2px solid ${catColor}66`,borderRadius:20,padding:"4px 12px",fontSize:12,fontWeight:700,color:catColor}}>
-                      <span style={{width:8,height:8,borderRadius:"50%",background:catColor,display:"inline-block"}}/>
-                      {item.category}
-                    </span>
-                  </td>
-                  <td style={{padding:"13px 12px"}}>
-                    <div style={{display:"flex",gap:6}}>
+                  <td style={{padding:"10px 8px"}}>
+                    <div style={{display:"flex",gap:4,justifyContent:"center"}}>
                       <button onClick={()=>{setEditItem(item);setForm({name:item.name,amount:String(item.amount),advance:String(item.advance||0),type:item.type,category:item.category,note:item.note||""});setShowForm(true);}}
-                        style={{background:"#EBF8FF",color:"#2B6CB0",border:"2px solid #BEE3F8",borderRadius:8,padding:"6px 14px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                        ✏️ עריכה
+                        style={{background:"#EBF8FF",color:"#2B6CB0",border:"1px solid #BEE3F8",borderRadius:6,padding:"5px 10px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                        ✏️
                       </button>
                       <button onClick={()=>deleteItem(item.id)}
-                        style={{background:"#FFF5F5",color:"#C53030",border:"2px solid #FED7D7",borderRadius:8,padding:"6px 10px",fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
+                        style={{background:"#FFF5F5",color:"#C53030",border:"1px solid #FED7D7",borderRadius:6,padding:"5px 8px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
                         🗑️
                       </button>
                     </div>
@@ -4261,7 +4254,7 @@ function WhatsAppScreen({ event, guests }) {
       <div className="wa-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
 
         {/* עמודה שמאל  -  עריכה */}
-        <div>
+        <div style={{minWidth:0}}>
 
           {/* בחירת נוסח */}
           <div style={{background:"#fff",borderRadius:14,padding:16,marginBottom:16,border:`1px solid ${C.border}`,boxShadow:"0 2px 8px rgba(0,0,0,.04)"}}>
