@@ -939,7 +939,7 @@ function LandingPage({ onOpenAuth, onLogout }) {
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:22}}>
             {eventTypes.map((ev,i)=>(
-              <div key={ev.title} className="fu" style={{opacity:0,transform:"translateY(22px)",transition:`opacity .6s ${i.08}s,transform .6s ${i.08}s`,borderRadius:20,overflow:"hidden",cursor:"pointer",boxShadow:"0 4px 20px rgba(27,58,140,.08)",border:`1px solid ${C.border}`}}
+              <div key={ev.title} className="fu" style={{opacity:0,transform:"translateY(22px)",transition:`opacity .6s ${i*.08}s,transform .6s ${i*.08}s`,borderRadius:20,overflow:"hidden",cursor:"pointer",boxShadow:"0 4px 20px rgba(27,58,140,.08)",border:`1px solid ${C.border}`}}
                 onMouseEnter={e=>{e.currentTarget.querySelector("img").style.transform="scale(1.05)";}} onMouseLeave={e=>{e.currentTarget.querySelector("img").style.transform="scale(1)";}}>
                 <div style={{overflow:"hidden",height:180}}>
                   <img src={ev.img} alt={ev.title} style={{width:"100%",height:"100%",objectFit:"cover",transition:"transform .4s ease"}}/>
@@ -989,7 +989,7 @@ function LandingPage({ onOpenAuth, onLogout }) {
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))",gap:34}}>
             {[["01","הוסף אורחים","ייבא מ-Excel, מאנשי קשר, או הוסף ידנית. כל אורח עם שם, טלפון וכמות מגיעים."],["02","צור שולחנות","הגדר שולחנות עגולים, מרובעים, שולחן אבירים. סדר על מפת האולם."],["03","AI עושה השאר","תאר העדפות ו-AI יסדר הכל. הדפס פתקי הושבה לאורחים ביום האירוע."]].map(([n,t,d],i)=>(
-              <div key={n} className="fu" style={{opacity:0,transform:"translateY(22px)",transition:`opacity .6s ${i.12}s,transform .6s ${i.12}s`}}>
+              <div key={n} className="fu" style={{opacity:0,transform:"translateY(22px)",transition:`opacity .6s ${i*.12}s,transform .6s ${i*.12}s`}}>
                 <div style={{fontFamily:"'Syne',sans-serif",fontSize:54,fontWeight:800,color:"rgba(255,255,255,.12)",lineHeight:1,marginBottom:10}}>{n}</div>
                 <div style={{fontSize:17,fontWeight:800,color:"#fff",marginBottom:7}}>{t}</div>
                 <div style={{fontSize:14,color:"rgba(255,255,255,.6)",lineHeight:1.7}}>{d}</div>
@@ -1019,7 +1019,7 @@ function LandingPage({ onOpenAuth, onLogout }) {
               {icon:"🖨️",title:"פתק הושבה",desc:"חפש שם אורח  -  קבל פתק מיידי עם מספר שולחן. כמו קיוסק מקצועי ביום האירוע.",color:C.blue,bg:C.blueXL,tags:["🔍 חיפוש מהיר","🖨️ הדפסה מיידית","📱 עובד מהנייד"]},
             ].map((f,i)=>(
               <div key={f.title} className="fu"
-                style={{opacity:0,transform:"translateY(22px)",transition:`opacity .6s ${i.07}s,transform .6s ${i.07}s`,
+                style={{opacity:0,transform:"translateY(22px)",transition:`opacity .6s ${i*.07}s,transform .6s ${i*.07}s`,
                   background:C.surface,border:`1px solid ${C.border}`,borderRadius:20,padding:"24px",textAlign:"right"}}
                 onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-5px)";e.currentTarget.style.borderColor=f.color+"66";e.currentTarget.style.boxShadow=`0 8px 24px ${f.color}18`;}}
                 onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.borderColor=C.border;e.currentTarget.style.boxShadow="none";}}>
