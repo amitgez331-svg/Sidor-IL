@@ -1500,6 +1500,93 @@ function MobileSeating({ tables, guests, search, setSearch, newGuest, setNewGues
 }
 
 // ─── SEATING APP ──────────────────────────────────────────────────────────────
+// ─── MOBILE RSVP SCREEN ──────────────────────────────────────────────────────
+function MobileRsvpScreen({ guests, tables, event, sb, setGuests, setTables, setModal }) {
+  const allGuests=[...guests,...tables.flatMap(t=>t.guests||[])];
+  const confirmed=allGuests.filter(g=>g.rsvp==="confirmed").reduce((s,g)=>s+(g.guest_count||1),0);
+  const declined=allGuests.filter(g=>g.rsvp==="declined").reduce((s,g)=>s+(g.guest_count||1),0);
+  const [statusModal,setStatusModal]=useState(null);
+  const [search,setSearch]=useState("");
+  const filtered=allGuests.filter(g=>!search||g.name?.includes(search)||g.phone?.includes(search));
+
+  const updateRsvp=async(g,rsvp)=>{
+    await sb.from("guests").update({rsvp}).eq("id",g.id);
+    setGuests(gs=>gs.map(x=>x.id===g.id?{...x,rsvp}:x));
+    setTables(ts=>ts.map(t=>({...t,guests:(t.guests||[]).map(x=>x.id===g.id?{...x,rsvp}:x)})));
+    setStatusModal(null);
+  };
+
+  const rsvpColor=(r)=>r==="confirmed"?"#276749":r==="declined"?"#C53030":"#888";
+  const rsvpBg=(r)=>r==="confirmed"?"#F0FFF4":r==="declined"?"#FFF5F5":"#F7F7F7";
+  const rsvpLabel=(r)=>r==="confirmed"?"✓ מגיע":r==="declined"?"✗ לא מגיע":"⏳ ממתין";
+
+  return(
+    <div style={{direction:"rtl",fontFamily:"'Heebo',sans-serif",paddingBottom:80}}>
+      {statusModal&&(
+        <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setStatusModal(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:20,padding:24,width:"100%",maxWidth:360,direction:"rtl"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+              <div style={{fontSize:16,fontWeight:900,color:"#1a1a1a"}}>שינוי מצב הגעה ל{statusModal.name}</div>
+              <button onClick={()=>setStatusModal(null)} style={{width:30,height:30,borderRadius:"50%",border:"1px solid #eee",background:"#f5f5f5",cursor:"pointer",fontSize:16,fontWeight:900}}>×</button>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              {[["confirmed","✓ מגיעים"],["declined","✗ לא מגיעים"],["pending","? אולי מגיעים"],["no_answer","📞 לא ענו"],["sent","✈️ נשלחה הודעה"],["not_shown","🕐 לא הוצגה הזמנה"]].map(([val,label])=>(
+                <button key={val} onClick={()=>updateRsvp(statusModal,val)}
+                  style={{background:statusModal.rsvp===val?"#3D5475":"#f5f5f5",color:statusModal.rsvp===val?"#fff":"#333",border:"1.5px solid #e5e5e5",borderRadius:50,padding:"14px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      <div style={{background:"#fff",padding:"16px 16px 12px",borderBottom:"1px solid #eee"}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,textAlign:"center",marginBottom:12}}>
+          <div><div style={{fontSize:30,fontWeight:900,color:"#1B3A8C",lineHeight:1}}>{allGuests.length}</div><div style={{fontSize:11,color:"#666",fontWeight:600}}>מוזמנים</div></div>
+          <div><div style={{fontSize:30,fontWeight:900,color:"#C53030",lineHeight:1}}>{declined}</div><div style={{fontSize:11,color:"#666",fontWeight:600}}>לא מגיעים</div></div>
+          <div><div style={{fontSize:30,fontWeight:900,color:"#276749",lineHeight:1}}>{confirmed}</div><div style={{fontSize:11,color:"#666",fontWeight:600}}>מגיעים</div></div>
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={()=>setModal("addGuest")} style={{flex:1,background:"#3D5475",color:"#fff",border:"none",borderRadius:50,padding:"10px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>➕ הוסף מוזמן</button>
+          <button onClick={()=>{
+            const BOM="\uFEFF";
+            const rows=[["שם מלא","טלפון","סטטוס","כמות"],...allGuests.map(g=>[g.name,g.phone||"",g.rsvp==="confirmed"?"מגיע":g.rsvp==="declined"?"לא מגיע":"ממתין",g.guest_count||1])];
+            const csv=BOM+rows.map(r=>r.map(c=>'"'+String(c||"").replace(/"/g,'\'\'')+'"').join(",")).join("\n");
+            const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));a.download="אישורי_הגעה.csv";a.click();
+          }} style={{background:"#276749",color:"#fff",border:"none",borderRadius:50,padding:"10px 16px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>📥</button>
+        </div>
+      </div>
+      <div style={{padding:"10px 16px"}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="חיפוש..." style={{width:"100%",border:"1px solid #e5e5e5",borderRadius:50,padding:"9px 16px",fontSize:13,fontFamily:"inherit",outline:"none",boxSizing:"border-box",background:"#f9f9f9"}}/>
+      </div>
+      <div style={{background:"#fff",margin:"0 12px",borderRadius:14,overflow:"hidden",border:"1px solid #eee",boxShadow:"0 2px 8px rgba(0,0,0,.04)"}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 90px 80px",padding:"10px 14px",background:"#f5f5f5",borderBottom:"1px solid #eee"}}>
+          {["שם מלא","טלפון","סטטוס"].map(h=>(<div key={h} style={{fontSize:11,fontWeight:800,color:"#555",textAlign:"center"}}>{h}</div>))}
+        </div>
+        {filtered.map((g,i)=>(
+          <div key={g.id} onClick={()=>setStatusModal(g)}
+            style={{display:"grid",gridTemplateColumns:"1fr 90px 80px",padding:"11px 14px",borderBottom:i<filtered.length-1?"1px solid #f0f0f0":"none",cursor:"pointer",background:i%2===0?"#fff":"#fafafa",alignItems:"center"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{width:26,height:26,borderRadius:"50%",background:"linear-gradient(135deg,#1B3A8C,#4A7AFF)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,flexShrink:0}}>{g.name?.[0]}</div>
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:"#1a1a1a",lineHeight:1.2}}>{g.name}</div>
+                {g.guest_count>1&&<div style={{fontSize:10,color:"#888"}}>({g.guest_count})</div>}
+              </div>
+            </div>
+            <div style={{fontSize:10,color:"#666",textAlign:"center",direction:"ltr"}}>{g.phone||"—"}</div>
+            <div style={{textAlign:"center"}}>
+              <span style={{fontSize:10,fontWeight:700,color:rsvpColor(g.rsvp),background:rsvpBg(g.rsvp),borderRadius:50,padding:"3px 8px",whiteSpace:"nowrap"}}>{rsvpLabel(g.rsvp)}</span>
+            </div>
+          </div>
+        ))}
+        {filtered.length===0&&<div style={{padding:20,textAlign:"center",color:"#aaa",fontSize:13}}>לא נמצאו אורחים</div>}
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#999",margin:"8px 0 16px"}}>{filtered.length} מתוך {allGuests.length} אורחים</div>
+    </div>
+  );
+}
+
+
 function SeatingApp({ user, event, onBack }) {
   const [tables,setTables]=useState([]),[guests,setGuests]=useState([]),[selected,setSelected]=useState(null),[view,setView]=useState("map"),[screen,setScreen]=useState("home"),[modal,setModal]=useState(null),[editGuestData,setEditGuestData]=useState(null),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[search,setSearch]=useState(""),[newGuest,setNewGuest]=useState(""),[mobile,setMobile]=useState(isMobile());
   const [sidebarOpen,setSidebarOpen]=useState(true);
@@ -1742,123 +1829,7 @@ function SeatingApp({ user, event, onBack }) {
           </div>
         )}
         {modal==="addGuest"&&<GuestModal eventId={event.id} onClose={()=>setModal(null)} existingGuests={[...guests,...tables.flatMap(t=>t.guests||[])]} onSave={async(data)=>{await addGuest(data);setModal(null);}}/>}
-        {screen==="rsvp"&&(()=>{
-          const allGuests=[...guests,...tables.flatMap(t=>t.guests||[])];
-          const confirmed=allGuests.filter(g=>g.rsvp==="confirmed").reduce((s,g)=>s+(g.guest_count||1),0);
-          const declined=allGuests.filter(g=>g.rsvp==="declined").reduce((s,g)=>s+(g.guest_count||1),0);
-          const [statusModal,setStatusModal]=useState(null);
-          const [search,setSearch]=useState("");
-          const filtered=allGuests.filter(g=>!search||g.name?.includes(search)||g.phone?.includes(search));
-
-          const updateRsvp=async(g,rsvp)=>{
-            await sb.from("guests").update({rsvp}).eq("id",g.id);
-            setGuests(gs=>gs.map(x=>x.id===g.id?{...x,rsvp}:x));
-            setTables(ts=>ts.map(t=>({...t,guests:(t.guests||[]).map(x=>x.id===g.id?{...x,rsvp}:x)})));
-            setStatusModal(null);
-          };
-
-          const rsvpColor=(r)=>r==="confirmed"?"#276749":r==="declined"?"#C53030":"#888";
-          const rsvpBg=(r)=>r==="confirmed"?"#F0FFF4":r==="declined"?"#FFF5F5":"#F7F7F7";
-          const rsvpLabel=(r)=>r==="confirmed"?"✓ מגיע":r==="declined"?"✗ לא מגיע":"⏳ ממתין";
-
-          return(
-            <div style={{direction:"rtl",fontFamily:"'Heebo',sans-serif",paddingBottom:80}}>
-
-              {/* מודל שינוי סטטוס */}
-              {statusModal&&(
-                <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setStatusModal(null)}>
-                  <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:20,padding:24,width:"100%",maxWidth:360,direction:"rtl"}}>
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
-                      <div style={{fontSize:16,fontWeight:900,color:"#1a1a1a"}}>שינוי מצב הגעה ל{statusModal.name}</div>
-                      <button onClick={()=>setStatusModal(null)} style={{width:30,height:30,borderRadius:"50%",border:"1px solid #eee",background:"#f5f5f5",cursor:"pointer",fontSize:16,fontWeight:900}}>×</button>
-                    </div>
-                    <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                      {[
-                        ["confirmed","✓ מגיעים"],
-                        ["declined","✗ לא מגיעים"],
-                        ["pending","? אולי מגיעים"],
-                        ["no_answer","📞 לא ענו"],
-                        ["sent","✈️ נשלחה הודעה"],
-                        ["not_shown","🕐 לא הוצגה הזמנה"],
-                      ].map(([val,label])=>(
-                        <button key={val} onClick={()=>updateRsvp(statusModal,val)}
-                          style={{background:statusModal.rsvp===val?"#3D5475":"#f5f5f5",
-                            color:statusModal.rsvp===val?"#fff":"#333",
-                            border:"1.5px solid #e5e5e5",borderRadius:50,padding:"14px",
-                            fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* סטטיסטיקות */}
-              <div style={{background:"#fff",padding:"16px 16px 12px",borderBottom:"1px solid #eee"}}>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,textAlign:"center",marginBottom:12}}>
-                  <div><div style={{fontSize:30,fontWeight:900,color:"#1B3A8C",lineHeight:1}}>{allGuests.length}</div><div style={{fontSize:11,color:"#666",fontWeight:600}}>מוזמנים</div></div>
-                  <div><div style={{fontSize:30,fontWeight:900,color:"#C53030",lineHeight:1}}>{declined}</div><div style={{fontSize:11,color:"#666",fontWeight:600}}>לא מגיעים</div></div>
-                  <div><div style={{fontSize:30,fontWeight:900,color:"#276749",lineHeight:1}}>{confirmed}</div><div style={{fontSize:11,color:"#666",fontWeight:600}}>מגיעים</div></div>
-                </div>
-                <div style={{display:"flex",gap:8}}>
-                  <button onClick={()=>setModal("addGuest")}
-                    style={{flex:1,background:"#3D5475",color:"#fff",border:"none",borderRadius:50,padding:"10px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>
-                    ➕ הוסף מוזמן
-                  </button>
-                  <button onClick={()=>{
-                    const BOM="\uFEFF";
-                    const rows=[["שם מלא","טלפון","סטטוס","כמות"],...allGuests.map(g=>[g.name,g.phone||"",g.rsvp==="confirmed"?"מגיע":g.rsvp==="declined"?"לא מגיע":"ממתין",g.guest_count||1])];
-                    const csv=BOM+rows.map(r=>r.map(c=>`"${String(c||"").replace(/"/g,'""')}"`).join(",")).join("\n");
-                    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));a.download="אישורי_הגעה.csv";a.click();
-                  }} style={{background:"#276749",color:"#fff",border:"none",borderRadius:50,padding:"10px 16px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>
-                    📥
-                  </button>
-                </div>
-              </div>
-
-              {/* חיפוש */}
-              <div style={{padding:"10px 16px"}}>
-                <input value={search} onChange={e=>setSearch(e.target.value)}
-                  placeholder="חיפוש..."
-                  style={{width:"100%",border:"1px solid #e5e5e5",borderRadius:50,padding:"9px 16px",fontSize:13,fontFamily:"inherit",outline:"none",boxSizing:"border-box",background:"#f9f9f9"}}/>
-              </div>
-
-              {/* טבלה */}
-              <div style={{background:"#fff",margin:"0 12px",borderRadius:14,overflow:"hidden",border:"1px solid #eee",boxShadow:"0 2px 8px rgba(0,0,0,.04)"}}>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 90px 80px",padding:"10px 14px",background:"#f5f5f5",borderBottom:"1px solid #eee"}}>
-                  {["שם מלא","טלפון","סטטוס"].map(h=>(
-                    <div key={h} style={{fontSize:11,fontWeight:800,color:"#555",textAlign:"center"}}>{h}</div>
-                  ))}
-                </div>
-                {filtered.map((g,i)=>(
-                  <div key={g.id} onClick={()=>setStatusModal(g)}
-                    style={{display:"grid",gridTemplateColumns:"1fr 90px 80px",padding:"11px 14px",
-                      borderBottom:i<filtered.length-1?"1px solid #f0f0f0":"none",
-                      cursor:"pointer",background:i%2===0?"#fff":"#fafafa",alignItems:"center"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:8}}>
-                      <div style={{width:26,height:26,borderRadius:"50%",background:"linear-gradient(135deg,#1B3A8C,#4A7AFF)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,flexShrink:0}}>{g.name?.[0]}</div>
-                      <div>
-                        <div style={{fontSize:12,fontWeight:700,color:"#1a1a1a",lineHeight:1.2}}>{g.name}</div>
-                        {g.guest_count>1&&<div style={{fontSize:10,color:"#888"}}>({g.guest_count})</div>}
-                      </div>
-                    </div>
-                    <div style={{fontSize:10,color:"#666",textAlign:"center",direction:"ltr"}}>{g.phone||"—"}</div>
-                    <div style={{textAlign:"center"}}>
-                      <span style={{fontSize:10,fontWeight:700,color:rsvpColor(g.rsvp),background:rsvpBg(g.rsvp),borderRadius:50,padding:"3px 8px",whiteSpace:"nowrap"}}>
-                        {rsvpLabel(g.rsvp)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                {filtered.length===0&&<div style={{padding:20,textAlign:"center",color:"#aaa",fontSize:13}}>לא נמצאו אורחים</div>}
-              </div>
-              <div style={{textAlign:"center",fontSize:11,color:"#999",margin:"8px 0 16px"}}>
-                {filtered.length} מתוך {allGuests.length} אורחים
-              </div>
-            </div>
-          );
-        })()}
+        {screen==="rsvp"&&<MobileRsvpScreen guests={guests} tables={tables} event={event} sb={sb} setGuests={setGuests} setTables={setTables} setModal={setModal}/>}
         {screen==="import"&&(
           <div style={{padding:20,direction:"rtl",fontFamily:"'Heebo',sans-serif"}}>
             <div style={{background:C.blueXL,border:`2px dashed ${C.blueL}`,borderRadius:16,padding:24,textAlign:"center",marginBottom:20}}>
@@ -3354,20 +3325,18 @@ function BudgetScreen({ event }) {
 
       {/* טבלה */}
       <div style={{background:"#fff",boxShadow:"0 2px 16px rgba(0,0,0,.08)",overflowX:"auto",borderTop:"2px solid #C3D3F5",borderBottom:"2px solid #C3D3F5",width:"100%"}}>
-        <table style={{width:"100%",minWidth:480,borderCollapse:"collapse",fontSize:12}}>
+        <table style={{width:"100%",minWidth:320,borderCollapse:"collapse",fontSize:12}}>
           <thead>
             <tr style={{background:"#1B3A8C",borderBottom:"3px solid #122e70"}}>
               <th style={{padding:"10px 12px",textAlign:"right",fontWeight:800,color:"#fff",fontSize:12}}>מוצר</th>
-              <th style={{padding:"10px 8px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:12,borderRight:"1px solid rgba(255,255,255,.15)"}}>סוג</th>
               <th style={{padding:"10px 8px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:12,borderRight:"1px solid rgba(255,255,255,.15)"}}>סכום</th>
-              <th style={{padding:"10px 8px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:12,borderRight:"1px solid rgba(255,255,255,.15)"}}>מקדמה</th>
               <th style={{padding:"10px 8px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:12,borderRight:"1px solid rgba(255,255,255,.15)"}}>נשאר</th>
               <th style={{padding:"10px 8px",textAlign:"center",fontWeight:800,color:"#fff",fontSize:12}}>פעולות</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length===0&&(
-              <tr><td colSpan={6} style={{padding:"40px",textAlign:"center",color:"#aaa",fontSize:14}}>אין נתונים בטבלה</td></tr>
+              <tr><td colSpan={4} style={{padding:"40px",textAlign:"center",color:"#aaa",fontSize:14}}>אין נתונים בטבלה</td></tr>
             )}
             {filtered.map(item=>{
               const catColor=CAT_COLORS[item.category]||"#718096";
@@ -3376,20 +3345,12 @@ function BudgetScreen({ event }) {
                 <tr key={item.id} style={{borderBottom:"1px solid #E2E8F0",background:catColor+"10",transition:"filter .1s"}}
                   onMouseEnter={e=>e.currentTarget.style.filter="brightness(.96)"}
                   onMouseLeave={e=>e.currentTarget.style.filter="none"}>
-                  <td style={{padding:"10px 12px",borderRight:"1px solid #E2E8F0",maxWidth:140}}>
+                  <td style={{padding:"10px 12px",borderRight:"1px solid #E2E8F0",maxWidth:150}}>
                     <div style={{fontWeight:800,color:"#1A202C",fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.name}</div>
-                    {item.note&&<div style={{fontSize:10,color:"#718096",marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.note}</div>}
-                  </td>
-                  <td style={{padding:"10px 8px",textAlign:"center",borderRight:"1px solid #E2E8F0"}}>
-                    <span style={{background:item.type==="expense"?"#FFF5F5":"#F0FFF4",color:item.type==="expense"?"#C53030":"#276749",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:700}}>
-                      {item.type==="expense"?"הוצ'":"הכנ'"}
-                    </span>
+                    <div style={{fontSize:10,color:item.type==="expense"?"#C53030":"#276749",marginTop:1,fontWeight:700}}>{item.type==="expense"?"הוצאה":"הכנסה"} · {item.category}</div>
                   </td>
                   <td style={{padding:"10px 8px",textAlign:"center",fontWeight:800,fontSize:13,color:item.type==="expense"?"#C53030":"#276749",borderRight:"1px solid #E2E8F0"}}>
                     ₪{Number(item.amount||0).toLocaleString()}
-                  </td>
-                  <td style={{padding:"10px 8px",textAlign:"center",fontWeight:700,fontSize:13,color:"#2D3748",borderRight:"1px solid #E2E8F0"}}>
-                    {Number(item.advance||0)>0?<span style={{color:"#276749"}}>₪{Number(item.advance).toLocaleString()}</span>:<span style={{color:"#CBD5E0"}}>-</span>}
                   </td>
                   <td style={{padding:"10px 8px",textAlign:"center",fontWeight:700,fontSize:13,borderRight:"1px solid #E2E8F0"}}>
                     {remain>0?<span style={{color:"#C53030",fontWeight:800}}>₪{remain.toLocaleString()}</span>:<span style={{color:"#276749",fontWeight:800}}>✓</span>}
@@ -3397,13 +3358,9 @@ function BudgetScreen({ event }) {
                   <td style={{padding:"10px 8px"}}>
                     <div style={{display:"flex",gap:4,justifyContent:"center"}}>
                       <button onClick={()=>{setEditItem(item);setForm({name:item.name,amount:String(item.amount),advance:String(item.advance||0),type:item.type,category:item.category,note:item.note||""});setShowForm(true);}}
-                        style={{background:"#EBF8FF",color:"#2B6CB0",border:"1px solid #BEE3F8",borderRadius:6,padding:"5px 10px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                        ✏️
-                      </button>
+                        style={{background:"#EBF8FF",color:"#2B6CB0",border:"1px solid #BEE3F8",borderRadius:6,padding:"5px 10px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>✏️</button>
                       <button onClick={()=>deleteItem(item.id)}
-                        style={{background:"#FFF5F5",color:"#C53030",border:"1px solid #FED7D7",borderRadius:6,padding:"5px 8px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
-                        🗑️
-                      </button>
+                        style={{background:"#FFF5F5",color:"#C53030",border:"1px solid #FED7D7",borderRadius:6,padding:"5px 8px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>🗑️</button>
                     </div>
                   </td>
                 </tr>
