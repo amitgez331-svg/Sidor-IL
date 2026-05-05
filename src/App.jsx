@@ -1505,6 +1505,135 @@ function MobileSeating({ tables, guests, search, setSearch, newGuest, setNewGues
 }
 
 // ─── SEATING APP ──────────────────────────────────────────────────────────────
+// ─── MOBILE SETTINGS SCREEN ──────────────────────────────────────────────────
+function MobileSettingsScreen({ user, event, sb, setGuests, setScreen }) {
+  const [pwForm,setPwForm]=useState({newP:"",confirm:""});
+  const [pwMsg,setPwMsg]=useState(null);
+  const [notifyRsvp,setNotifyRsvp]=useState(event.settings_json?.notifyRsvp??true);
+  const [notifyApp,setNotifyApp]=useState(event.settings_json?.notifyApp??true);
+
+  const changePw=async()=>{
+    if(pwForm.newP!==pwForm.confirm){setPwMsg({err:true,txt:"הסיסמאות לא תואמות"});return;}
+    if(pwForm.newP.length<6){setPwMsg({err:true,txt:"סיסמה חייבת להכיל לפחות 6 תווים"});return;}
+    const{error}=await sb.auth.updateUser({password:pwForm.newP});
+    if(error)setPwMsg({err:true,txt:error.message});
+    else{setPwMsg({err:false,txt:"✅ הסיסמה עודכנה בהצלחה"});setPwForm({newP:"",confirm:""});}
+  };
+
+  const saveNotify=async(key,val)=>{
+    const settings={...event.settings_json,[key]:val};
+    await sb.from("events").update({settings_json:settings}).eq("id",event.id);
+    Object.assign(event,{settings_json:settings});
+  };
+
+  const Toggle=({val,onChange})=>(
+    <div onClick={()=>onChange(!val)} style={{width:44,height:24,borderRadius:12,background:val?"#1B3A8C":"#CBD5E0",cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
+      <div style={{position:"absolute",top:2,left:val?22:2,width:20,height:20,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/>
+    </div>
+  );
+
+  return(
+    <div style={{direction:"rtl",fontFamily:"'Heebo',sans-serif",paddingBottom:80}}>
+
+      {/* פרופיל */}
+      <div style={{background:"#fff",margin:"12px 16px",borderRadius:16,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,.06)"}}>
+        <div style={{background:"linear-gradient(135deg,#1B3A8C,#2952C8)",padding:"16px",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:48,height:48,borderRadius:"50%",background:"rgba(255,255,255,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:900,color:"#fff"}}>
+            {user.email?.[0]?.toUpperCase()}
+          </div>
+          <div>
+            <div style={{fontSize:15,fontWeight:900,color:"#fff"}}>{event.groom_name&&event.bride_name?`${event.groom_name} & ${event.bride_name}`:event.name}</div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,.7)"}}>{user.email}</div>
+          </div>
+        </div>
+        <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:8}}>
+          {[["שם פרטי",event.groom_name||""],["שם משפחה",event.bride_name||""],["מס' נייד",user.phone||"—"]].map(([l,v])=>(
+            <div key={l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingBottom:8,borderBottom:"1px solid #f5f5f5"}}>
+              <span style={{fontSize:13,color:"#555"}}>{l}</span>
+              <span style={{fontSize:13,fontWeight:700,direction:l==="מס' נייד"?"ltr":"rtl"}}>{v}</span>
+            </div>
+          ))}
+          <button onClick={()=>setScreen("settings_event")} style={{background:"#EEF2FF",color:"#1B3A8C",border:"none",borderRadius:10,padding:"10px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginTop:4}}>
+            📋 עריכת פרטי האירוע
+          </button>
+        </div>
+      </div>
+
+      {/* שינוי סיסמה */}
+      <div style={{background:"#fff",margin:"0 16px 12px",borderRadius:16,padding:"16px",boxShadow:"0 2px 8px rgba(0,0,0,.06)"}}>
+        <div style={{fontSize:14,fontWeight:900,color:"#1a1a1a",marginBottom:14}}>🔒 שינוי סיסמה</div>
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <input type="password" placeholder="סיסמה חדשה" value={pwForm.newP} onChange={e=>setPwForm(f=>({...f,newP:e.target.value}))}
+            style={{border:"1.5px solid #E2E8F0",borderRadius:10,padding:"10px 14px",fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+          <input type="password" placeholder="אימות סיסמה חדשה" value={pwForm.confirm} onChange={e=>setPwForm(f=>({...f,confirm:e.target.value}))}
+            style={{border:"1.5px solid #E2E8F0",borderRadius:10,padding:"10px 14px",fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+          {pwMsg&&<div style={{fontSize:12,fontWeight:700,color:pwMsg.err?"#C53030":"#276749"}}>{pwMsg.txt}</div>}
+          <button onClick={changePw} style={{background:"#1B3A8C",color:"#fff",border:"none",borderRadius:10,padding:"11px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>
+            שמור סיסמה חדשה
+          </button>
+        </div>
+      </div>
+
+      {/* התראות */}
+      <div style={{background:"#fff",margin:"0 16px 12px",borderRadius:16,padding:"16px",boxShadow:"0 2px 8px rgba(0,0,0,.06)"}}>
+        <div style={{fontSize:14,fontWeight:900,color:"#1a1a1a",marginBottom:14}}>🔔 הגדרת התראות</div>
+        {[
+          {label:"התראות אפליקציה",desc:"התראות מערכת ועדכונים שוטפים",val:notifyApp,onChange:v=>{setNotifyApp(v);saveNotify("notifyApp",v);}},
+          {label:"אישורי הגעה",desc:"התראה על כל אישור, ביטול או עדכון מהאורחים",val:notifyRsvp,onChange:v=>{setNotifyRsvp(v);saveNotify("notifyRsvp",v);}},
+        ].map(item=>(
+          <div key={item.label} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0",borderBottom:"1px solid #f5f5f5"}}>
+            <div><div style={{fontSize:13,fontWeight:700,color:"#1a1a1a"}}>{item.label}</div><div style={{fontSize:11,color:"#888",marginTop:2}}>{item.desc}</div></div>
+            <Toggle val={item.val} onChange={item.onChange}/>
+          </div>
+        ))}
+      </div>
+
+      {/* איפוס */}
+      <div style={{background:"#fff",margin:"0 16px 12px",borderRadius:16,padding:"16px",boxShadow:"0 2px 8px rgba(0,0,0,.06)"}}>
+        <div style={{fontSize:14,fontWeight:900,color:"#1a1a1a",marginBottom:12}}>⚠️ איפוס</div>
+        <button onClick={async()=>{
+          if(!window.confirm("למחוק את כל אישורי ההגעה?"))return;
+          await sb.from("guests").update({rsvp:"pending"}).eq("event_id",event.id);
+          setGuests(gs=>gs.map(g=>({...g,rsvp:"pending"})));
+        }} style={{width:"100%",background:"#FFF5F5",color:"#C53030",border:"1px solid #FED7D7",borderRadius:10,padding:"11px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+          🔄 איפוס טבלת אישורי הגעה
+        </button>
+      </div>
+
+      {/* מחיקת חשבון */}
+      <div style={{background:"#fff",margin:"0 16px 12px",borderRadius:16,padding:"16px",boxShadow:"0 2px 8px rgba(0,0,0,.06)"}}>
+        <div style={{fontSize:14,fontWeight:900,color:"#C53030",marginBottom:8}}>🗑️ מחיקת חשבון</div>
+        <div style={{fontSize:12,color:"#888",marginBottom:12,lineHeight:1.6}}>מחיקת החשבון תמחק לצמיתות את כל הנתונים — אורחים, שולחנות, אירוע ופרטי חשבון. לא ניתן לשחזר.</div>
+        <button onClick={async()=>{
+          const first=window.confirm("האם אתה בטוח שברצונך למחוק את החשבון לצמיתות?\nכל הנתונים יימחקו ולא ניתן לשחזרם.");
+          if(!first)return;
+          const second=window.confirm("אישור אחרון - מחיקה סופית של החשבון?");
+          if(!second)return;
+          try{
+            await sb.from("guests").delete().eq("event_id",event.id);
+            await sb.from("tables").delete().eq("event_id",event.id);
+            await sb.from("events").delete().eq("id",event.id);
+            await sb.rpc("delete_user");
+            await sb.auth.signOut();
+          }catch(e){
+            alert("שגיאה במחיקה: "+e.message);
+          }
+        }} style={{width:"100%",background:"#FFF5F5",color:"#C53030",border:"2px solid #FC8181",borderRadius:10,padding:"11px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>
+          🗑️ מחק חשבון לצמיתות
+        </button>
+      </div>
+
+      {/* התנתקות */}
+      <div style={{padding:"0 16px"}}>
+        <button onClick={async()=>{await sb.auth.signOut();}}
+          style={{width:"100%",background:"#FFF5F5",color:"#C53030",border:"1px solid #FED7D7",borderRadius:12,padding:"13px",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>
+          🚪 התנתק
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── MOBILE RSVP SCREEN ──────────────────────────────────────────────────────
 function MobileRsvpScreen({ guests, tables, event, sb, setGuests, setTables, setModal }) {
   const allGuests=[...guests,...tables.flatMap(t=>t.guests||[])];
@@ -1983,15 +2112,7 @@ function SeatingApp({ user, event, onBack }) {
         }}/>}
         {screen==="budget"&&<BudgetScreen event={event}/>}
         {screen==="contacts"&&<ContactsScreen event={event} onAdd={async(list)=>{setSaving(true);await sb.from("guests").insert(list.map(c=>({name:c.name,phone:c.phone||null,rsvp:"pending",guest_count:1,event_id:event.id,table_id:null})));await loadAll();setSaving(false);setScreen("add");}}/>}
-        {screen==="settings"&&(
-          <div style={{padding:24,direction:"rtl",fontFamily:"'Heebo',sans-serif"}}>
-            <Card style={{padding:16,marginBottom:14}}>
-              <div style={{fontSize:12,color:C.muted,marginBottom:4}}>מחובר כ</div>
-              <div style={{fontSize:14,fontWeight:700,color:C.text}}>{user.email}</div>
-            </Card>
-            <Btn danger full onClick={async()=>{await sb.auth.signOut();setScreen("home");}}>🚪 התנתק</Btn>
-          </div>
-        )}
+        {screen==="settings"&&<MobileSettingsScreen user={user} event={event} sb={sb} setGuests={setGuests} setScreen={setScreen}/>}
       </div>
       <BottomNav active={screen} onChange={setScreen}/>
       {modal==="receipt"&&<ReceiptModal tables={tables} onClose={()=>setModal(null)}/>}
@@ -3893,6 +4014,7 @@ function SMSScreen({ event, guests }) {
   const [previewGuest,setPreviewGuest]=useState(null);
   const [smsBalance,setSmsBalance]=useState(null);
   const [showSmsSchedule,setShowSmsSchedule]=useState(false);
+  const [smsScheduleEnabled,setSmsScheduleEnabled]=useState([true,true,true,true]);
 
   useEffect(()=>{
     if(guests.length>0&&!previewGuest)setPreviewGuest(guests[0]);
@@ -4143,12 +4265,18 @@ function SMSScreen({ event, guests }) {
                     const tpl=TEMPLATES.find(t=>t.id===s.templateId);
                     const preview=tpl?tpl.text.replace("{שם}","[שם האורח]").replace("{קישור}","[קישור]").replace("{שולחן}","[מס' שולחן]").substring(0,80)+"...":"";
                     return(
-                      <div key={i} style={{border:`1.5px solid ${C.border}`,borderRadius:10,padding:"9px 12px",background:"#FAFAFA"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                      <div key={i} style={{border:`1.5px solid ${smsScheduleEnabled[i]?C.border:"#E2E8F0"}`,borderRadius:10,padding:"9px 12px",background:smsScheduleEnabled[i]?"#FAFAFA":"#F5F5F5",opacity:smsScheduleEnabled[i]?1:0.6}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:smsScheduleEnabled[i]?6:0}}>
                           <span style={{fontSize:17}}>{s.icon}</span>
                           <div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:C.text}}>{s.label}</div><div style={{fontSize:10,color:C.muted}}>{s.desc}</div></div>
-                          {!showSmsSchedule&&<div style={{fontSize:10,color:C.muted,direction:"ltr"}}>{disp} {s.time}</div>}
+                          {/* Toggle */}
+                          <div onClick={()=>setSmsScheduleEnabled(arr=>{const n=[...arr];n[i]=!n[i];return n;})}
+                            style={{width:38,height:22,borderRadius:11,background:smsScheduleEnabled[i]?C.blue:"#CBD5E0",cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
+                            <div style={{position:"absolute",top:2,left:smsScheduleEnabled[i]?18:2,width:18,height:18,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 3px rgba(0,0,0,.2)"}}/>
+                          </div>
+                          {!showSmsSchedule&&smsScheduleEnabled[i]&&<div style={{fontSize:10,color:C.muted,direction:"ltr"}}>{disp} {s.time}</div>}
                         </div>
+                        {smsScheduleEnabled[i]&&<>
                         {/* תצוגת הטקסט */}
                         <div style={{background:"#EEF2FF",borderRadius:8,padding:"6px 10px",fontSize:11,color:"#3D5475",lineHeight:1.5,marginBottom:showSmsSchedule?8:0}}>
                           📝 {preview}
@@ -4161,6 +4289,7 @@ function SMSScreen({ event, guests }) {
                           <div><div style={{fontSize:10,fontWeight:700,color:"#666",marginBottom:3}}>תאריך</div><input type="date" defaultValue={s.date} id={`sms_date_${i}`} style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:8,padding:"7px 8px",fontSize:12,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/></div>
                           <div><div style={{fontSize:10,fontWeight:700,color:"#666",marginBottom:3}}>שעה</div><input type="time" defaultValue={s.time} id={`sms_time_${i}`} style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:8,padding:"7px 8px",fontSize:12,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/></div>
                         </div>}
+                        </>}
                       </div>
                     );
                   })}
@@ -4373,6 +4502,7 @@ function WhatsAppScreen({ event, guests }) {
   const [scheduledDate,setScheduledDate]=useState("");
   const [scheduledTime,setScheduledTime]=useState("09:00");
   const [showSchedule,setShowSchedule]=useState(false);
+  const [waScheduleEnabled,setWaScheduleEnabled]=useState([true,true,true,true]);
 
   const sentOk=results?.filter(r=>r.status?.includes("✓")).length||0;
   const sentFail=results?.filter(r=>r.status?.includes("✗")).length||0;
@@ -4564,18 +4694,23 @@ function WhatsAppScreen({ event, guests }) {
                     const tpl=TEMPLATES.find(t=>t.id===s.templateId);
                     const preview=tpl?tpl.text.replace("{שם}","[שם האורח]").replace("{קישור}","[קישור]").replace("{שולחן}","[מס' שולחן]").substring(0,80)+"...":"";
                     return(
-                      <div key={i} style={{border:`1.5px solid ${showSchedule?C.border:"#E2E8F0"}`,borderRadius:12,padding:"10px 12px",background:"#FAFAFA"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                      <div key={i} style={{border:`1.5px solid ${waScheduleEnabled[i]?C.border:"#E2E8F0"}`,borderRadius:12,padding:"10px 12px",background:waScheduleEnabled[i]?"#FAFAFA":"#F5F5F5",opacity:waScheduleEnabled[i]?1:0.6}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:waScheduleEnabled[i]?6:0}}>
                           <div style={{fontSize:20,flexShrink:0}}>{s.icon}</div>
                           <div style={{flex:1}}>
                             <div style={{fontSize:13,fontWeight:800,color:C.text}}>{s.label}</div>
                             <div style={{fontSize:11,color:C.muted}}>{s.desc}</div>
                           </div>
-                          {!showSchedule&&(
+                          {/* Toggle */}
+                          <div onClick={()=>setWaScheduleEnabled(arr=>{const n=[...arr];n[i]=!n[i];return n;})}
+                            style={{width:38,height:22,borderRadius:11,background:waScheduleEnabled[i]?"#25D366":"#CBD5E0",cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
+                            <div style={{position:"absolute",top:2,left:waScheduleEnabled[i]?18:2,width:18,height:18,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 3px rgba(0,0,0,.2)"}}/>
+                          </div>
+                          {!showSchedule&&waScheduleEnabled[i]&&(
                             <div style={{textAlign:"left",fontSize:11,color:C.muted,direction:"ltr"}}>{displayDate} {s.time}</div>
                           )}
                         </div>
-
+                        {waScheduleEnabled[i]&&<>
                         {/* תצוגת טקסט */}
                         <div style={{background:"#F0FFF4",borderRadius:8,padding:"6px 10px",fontSize:11,color:"#276749",lineHeight:1.5,marginBottom:showSchedule?8:0}}>
                           📝 {preview}
@@ -4584,7 +4719,6 @@ function WhatsAppScreen({ event, guests }) {
                             ערוך
                           </button>
                         </div>
-
                         {showSchedule&&(
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                             <div>
@@ -4599,6 +4733,7 @@ function WhatsAppScreen({ event, guests }) {
                             </div>
                           </div>
                         )}
+                        </>}
                       </div>
                     );
                   })}
