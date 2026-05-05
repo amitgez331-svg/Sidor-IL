@@ -3893,7 +3893,6 @@ function SMSScreen({ event, guests }) {
   const [previewGuest,setPreviewGuest]=useState(null);
   const [smsBalance,setSmsBalance]=useState(null);
   const [showSmsSchedule,setShowSmsSchedule]=useState(false);
-  const [showSmsSchedule,setShowSmsSchedule]=useState(false);
 
   useEffect(()=>{
     if(guests.length>0&&!previewGuest)setPreviewGuest(guests[0]);
