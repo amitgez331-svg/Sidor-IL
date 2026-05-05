@@ -2314,9 +2314,12 @@ function SeatingApp({ user, event, onBack }) {
           <div onDragOver={e=>e.preventDefault()}
             onDrop={e=>{if(e.defaultPrevented)return;e.preventDefault();}}
             onClick={e=>{if(e.target===e.currentTarget)setSelected(null);}}
-            style={{flex:1,overflow:"auto",background:"#F8F6F0",position:"relative"}}>
+            style={{flex:1,overflow:"auto",background:"#F8F6F0",position:"relative",display:"flex",alignItems:"flex-start",justifyContent:"flex-start"}}>
             {(()=>{
-              const MAP_W=1200,MAP_H=800;
+              // מפה ממלאת את כל השטח הזמין
+              const sidebarW=sidebarOpen?320:0;
+              const MAP_W=Math.max(window.innerWidth-sidebarW-48,900);
+              const MAP_H=Math.max(window.innerHeight-120,600);
               return(
                 <div style={{position:"relative",width:MAP_W,height:MAP_H,flexShrink:0,
                   background:"#F5F0E8",
@@ -3889,6 +3892,8 @@ function SMSScreen({ event, guests }) {
   const [results,setResults]=useState(null);
   const [previewGuest,setPreviewGuest]=useState(null);
   const [smsBalance,setSmsBalance]=useState(null);
+  const [showSmsSchedule,setShowSmsSchedule]=useState(false);
+  const [showSmsSchedule,setShowSmsSchedule]=useState(false);
 
   useEffect(()=>{
     if(guests.length>0&&!previewGuest)setPreviewGuest(guests[0]);
@@ -4112,6 +4117,45 @@ function SMSScreen({ event, guests }) {
                 </button>
               ))}
             </div>
+
+          {/* תזמון שליחה SMS */}
+          {(()=>{
+            const eventD=event.date?new Date(event.date):null;
+            const calcDate=(daysOffset)=>{if(!eventD)return "";const d=new Date(eventD);d.setDate(d.getDate()+daysOffset);return d.toISOString().split("T")[0];};
+            const defs=[{label:"שבוע וחצי לפני",desc:"הזמנה ראשונה",date:calcDate(-11),time:"10:00",icon:"💌"},{label:"4 ימים לפני",desc:"תזכורת",date:calcDate(-4),time:"10:00",icon:"🔔"},{label:"ביום האירוע",desc:"מספר שולחן",date:calcDate(0),time:"09:00",icon:"🎉"},{label:"יומיים אחרי",desc:"הודעת תודה",date:calcDate(2),time:"10:00",icon:"💙"}];
+            return(
+              <div style={{background:"#fff",borderRadius:14,padding:16,marginBottom:12,border:`1px solid ${C.border}`}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:showSmsSchedule?10:0}}>
+                  <div style={{fontSize:14,fontWeight:800,color:C.text}}>⏰ תזמון שליחות</div>
+                  <button onClick={()=>setShowSmsSchedule(s=>!s)} style={{background:showSmsSchedule?"#EEF2FF":"#F7FAFC",color:showSmsSchedule?C.blue:"#555",border:`1px solid ${showSmsSchedule?C.blueL:"#E2E8F0"}`,borderRadius:8,padding:"5px 12px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                    {showSmsSchedule?"סגור":"ערוך תזמונים"}
+                  </button>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {defs.map((s,i)=>{
+                    const d=s.date?new Date(s.date+"T00:00:00"):null;
+                    const disp=d?d.toLocaleDateString("he-IL",{weekday:"short",day:"numeric",month:"short"}):"לא הוגדר";
+                    return(
+                      <div key={i} style={{border:`1.5px solid ${C.border}`,borderRadius:10,padding:"9px 12px",background:"#FAFAFA"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                          <span style={{fontSize:17}}>{s.icon}</span>
+                          <div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:C.text}}>{s.label}</div><div style={{fontSize:10,color:C.muted}}>{s.desc}</div></div>
+                          {!showSmsSchedule&&<div style={{fontSize:10,color:C.muted,direction:"ltr"}}>{disp} {s.time}</div>}
+                        </div>
+                        {showSmsSchedule&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8}}>
+                          <div><div style={{fontSize:10,fontWeight:700,color:"#666",marginBottom:3}}>תאריך</div><input type="date" defaultValue={s.date} id={`sms_date_${i}`} style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:8,padding:"7px 8px",fontSize:12,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/></div>
+                          <div><div style={{fontSize:10,fontWeight:700,color:"#666",marginBottom:3}}>שעה</div><input type="time" defaultValue={s.time} id={`sms_time_${i}`} style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:8,padding:"7px 8px",fontSize:12,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/></div>
+                        </div>}
+                      </div>
+                    );
+                  })}
+                  {showSmsSchedule&&<button onClick={()=>{const saved=defs.map((s,i)=>({...s,date:document.getElementById("sms_date_"+i)?.value||s.date,time:document.getElementById("sms_time_"+i)?.value||s.time}));alert("✅ נשמר!\n"+saved.map(s=>s.icon+" "+s.label+": "+s.date+" "+s.time).join("\n"));setShowSmsSchedule(false);}} style={{background:`linear-gradient(135deg,${C.blue},${C.blueM})`,color:"#fff",border:"none",borderRadius:10,padding:"11px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>💾 שמור תזמונים</button>}
+                  {!eventD&&<div style={{background:"#FFFBEB",border:"1px solid #FDE68A",borderRadius:8,padding:"7px 10px",fontSize:11,color:"#B45309"}}>⚠️ הגדר תאריך אירוע בפרטי האירוע</div>}
+                </div>
+              </div>
+            );
+          })()}
+
           </div>
 
           {/* כפתור שליחה */}
