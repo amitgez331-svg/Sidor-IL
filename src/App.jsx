@@ -767,7 +767,7 @@ function LandingPage({ onOpenAuth, onLogout }) {
         </div>
         {/* שאר  -  שמאל ב-DOM = ימין ב-RTL */}
         <div style={{flex:1,display:"flex",gap:8,alignItems:"center",flexDirection:"row-reverse",justifyContent:"flex-end"}}>
-          {[["#","ראשי"],["#features","פיצ'רים"],["#how","איך עובד"],["#pricing","מחירים"],["#contact","צור קשר"]].map(([h,l])=>(
+          {[["#","ראשי"],["#how","איך עובד"],["#pricing","מחירים"],["#contact","צור קשר"]].map(([h,l])=>(
             <a key={h} href={h} className="nav-link"
               style={{color:C.text,textDecoration:"none",fontSize:14,fontWeight:600,padding:"6px 12px",borderRadius:8,display:"none",transition:"background .15s"}}
               onMouseEnter={e=>{e.currentTarget.style.background=C.blueXL;e.currentTarget.style.color=C.blue;}}
@@ -899,21 +899,6 @@ function LandingPage({ onOpenAuth, onLogout }) {
             <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:32}}>
               <button onClick={()=>onOpenAuth("register")} style={{background:C.blue,color:"#fff",border:`2px solid ${C.blue}`,borderRadius:8,padding:"13px 30px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>הזמנה דיגיטלית בחינם ›</button>
               <button onClick={()=>onOpenAuth("login")} style={{background:"transparent",color:C.blue,border:`2px solid ${C.blue}`,borderRadius:8,padding:"13px 22px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>כניסה למערכת ›</button>
-            </div>
-            <div style={{display:"flex",gap:24,flexWrap:"nowrap",justifyContent:"flex-start"}}>
-              {[["✅","אישורי הגעה","בוואטסאפ"],["🪑","סידורי הושבה","מלאים"],["💌","הזמנה","דיגיטלית"]].map(([ic,t,s])=>(
-                <div key={t} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,flex:"0 0 auto"}}>
-                  <div style={{width:76,height:76,borderRadius:"50%",border:`2px solid ${C.border}`,background:"rgba(255,255,255,.95)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,boxShadow:"0 4px 16px rgba(27,58,140,.12)",transition:"all .2s"}}
-                    onMouseEnter={e=>{e.currentTarget.style.borderColor=C.blueL;e.currentTarget.style.transform="translateY(-3px)";}}
-                    onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.transform="none";}}>
-                    {ic}
-                  </div>
-                  <div style={{textAlign:"center"}}>
-                    <div style={{fontSize:14,fontWeight:800,color:C.text}}>{t}</div>
-                    <div style={{fontSize:12,color:C.muted,marginTop:1}}>{s}</div>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </div>
@@ -1086,7 +1071,12 @@ function LandingPage({ onOpenAuth, onLogout }) {
           </div>
           <div style={{borderTop:"1px solid rgba(255,255,255,.07)",paddingTop:22,display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10,fontSize:12,alignItems:"center"}}>
             <span>© 2025 Sidor-IL · כל הזכויות שמורות</span>
-            <div style={{display:"flex",gap:14}}>
+            <div style={{display:"flex",gap:14,alignItems:"center"}}>
+              <a href="#/privacy" style={{color:"rgba(255,255,255,.5)",textDecoration:"none",transition:"color .2s"}}
+                onMouseEnter={e=>e.target.style.color="#fff"} onMouseLeave={e=>e.target.style.color="rgba(255,255,255,.5)"}>
+                מדיניות פרטיות
+              </a>
+              <span style={{color:"rgba(255,255,255,.2)"}}>|</span>
               {["📘 פייסבוק","📸 אינסטגרם","🎵 טיקטוק"].map(s=>(<span key={s} style={{cursor:"pointer",transition:"color .2s"}} onMouseEnter={e=>e.target.style.color="#fff"} onMouseLeave={e=>e.target.style.color="rgba(255,255,255,.45)"}>{s}</span>))}
             </div>
             <span>🇮🇱 מערכת ישראלית · נבנתה עם ❤️</span>
@@ -3844,7 +3834,13 @@ function SMSScreen({ event, guests }) {
 
   const inviteUrl = `${window.location.origin}/#/invite/${event.invite_code||""}`;
 
-  const defaultSmsInviteText=`שלום {שם}! 💌\n${groomName} ו${brideName} מתחתנים! 🎉\nנשמח לראותך ביום המאושר שלנו.\n📅 ${eventDate}\n📍 ${event.venue||"יפורסם בקרוב"}\nלאישור הגעה: {קישור}`;
+  // טקסט לפי סוג האירוע
+  const eventType=event.event_type||"wedding";
+  const eventEmoji=eventType==="wedding"?"💍":eventType==="bar_mitzvah"?"✡️":eventType==="brit"?"👶":"💼";
+  const eventName=eventType==="wedding"?`חתונת ${groomName} ו${brideName}`:eventType==="bar_mitzvah"?`בר-מצווה של ${groomName||event.name}`:eventType==="brit"?`ברית של ${event.name}`:event.name;
+  const coupleRef=eventType==="wedding"?`${groomName} ו${brideName}`:(groomName||event.name);
+
+  const defaultSmsInviteText=`שלום {שם}! 💌\nמוזמנים ל${eventName}! ${eventEmoji}\nנשמח לראותך ביום המיוחד.\n📅 ${eventDate}\n📍 ${event.venue||"יפורסם בקרוב"}\nלאישור הגעה: {קישור}`;
   const smsInviteText=event.welcome_text?.trim()||defaultSmsInviteText;
 
   const TEMPLATES = [
@@ -3856,17 +3852,17 @@ function SMSScreen({ event, guests }) {
     {
       id:"reminder",
       label:"🔔 תזכורת לממתינים",
-      text:`שלום {שם}! עוד לא אישרת הגעה לחתונה של ${groomName} ו${brideName}.\nנשמח לדעת אם תגיע 🙏\nלאישור הגעה: {קישור}`,
+      text:`שלום {שם}! עוד לא אישרת הגעה ל${eventName}.\nנשמח לדעת אם תגיע 🙏\nלאישור הגעה: {קישור}`,
     },
     {
       id:"table",
       label:"🪑 מספר שולחן",
-      text:`שלום {שם}! מחכים לך בחתונה של ${groomName} ו${brideName}! 🎊\nהשולחן שלך: מספר {שולחן}\n📅 ${eventDate}\n📍 ${event.venue||""}`,
+      text:`שלום {שם}! מחכים לך ב${eventName}! 🎊\nהשולחן שלך: מספר {שולחן}\n📅 ${eventDate}\n📍 ${event.venue||""}`,
     },
     {
       id:"thanks",
       label:"💙 תודה אחרי האירוע",
-      text:`שלום {שם}! תודה רבה שהגעת לחתונה שלנו! 💙\nשמחנו לחגוג איתך.\nבאהבה, ${groomName} ו${brideName} 💍`,
+      text:`שלום {שם}! תודה רבה שהגעת ל${eventName}! 💙\nשמחנו לחגוג איתך.\nבאהבה, ${coupleRef} ${eventEmoji}`,
     },
   ];
 
@@ -4212,7 +4208,14 @@ function WhatsAppScreen({ event, guests }) {
 
   const inviteUrl = `${window.location.origin}/#/invite/${event.invite_code||""}`;
 
-  const defaultInviteText=`שלום {שם} היקרה! 💌\n\n${groomName} ו${brideName} מתחתנים! 🎉\n\nאנחנו נרגשים להזמין אותך ליום המאושר בחיינו ונשמח מאוד לראותך שם!\n\n📅 תאריך: ${eventDate}\n📍 מקום: ${event.venue||"יפורסם בקרוב"}\n\n👇 לאישור הגעה לחצי כאן:\n{קישור}\n\nבאהבה 💍\n${groomName} ו${brideName}`;
+  // טקסט לפי סוג האירוע
+  const eventType=event.event_type||"wedding";
+  const eventEmoji=eventType==="wedding"?"💍":eventType==="bar_mitzvah"?"✡️":eventType==="brit"?"👶":"💼";
+  const eventName=eventType==="wedding"?`חתונת ${groomName} ו${brideName}`:eventType==="bar_mitzvah"?`בר-מצווה של ${groomName||event.name}`:eventType==="brit"?`ברית של ${event.name}`:event.name;
+  const coupleRef=eventType==="wedding"?`${groomName} ו${brideName}`:(groomName||event.name);
+  const greeting=eventType==="wedding"?"ליום המאושר בחיינו":"לאירוע המיוחד שלנו";
+
+  const defaultInviteText=`שלום {שם}! 💌\n\nמוזמנים ל${eventName}! ${eventEmoji}\n\nנרגשים להזמין אותך ${greeting} ונשמח מאוד לראותך!\n\n📅 תאריך: ${eventDate}\n📍 מקום: ${event.venue||"יפורסם בקרוב"}\n\n👇 לאישור הגעה לחץ כאן:\n{קישור}\n\nבאהבה,\n${coupleRef} ${eventEmoji}`;
   const inviteText=event.welcome_text?.trim()||defaultInviteText;
 
   const TEMPLATES = [
@@ -4224,17 +4227,17 @@ function WhatsAppScreen({ event, guests }) {
     {
       id:"reminder",
       label:"🔔 תזכורת לממתינים",
-      text:`שלום {שם}! 👋\n\nעוד לא אישרת הגעה לחתונה של ${groomName} ו${brideName}.\nנשמח מאוד לדעת אם תוכלי להגיע 🙏\n\n📅 ${eventDate}\n\n👇 לאישור הגעה לחצי כאן:\n{קישור}\n\nמחכים לך! 💙`,
+      text:`שלום {שם}! 👋\n\nעוד לא אישרת הגעה ל${eventName}.\nנשמח מאוד לדעת אם תוכל להגיע 🙏\n\n📅 ${eventDate}\n\n👇 לאישור הגעה לחץ כאן:\n{קישור}\n\nמחכים לך! 💙`,
     },
     {
       id:"table",
       label:"🪑 מספר שולחן",
-      text:`שלום {שם}! 🎊\n\nמחכים לך היום בחתונה של ${groomName} ו${brideName}!\n\n🪑 השולחן שלך: מספר {שולחן}\n\n📅 ${eventDate}\n📍 ${event.venue||""}\n\n👇 לפרטים נוספים:\n{קישור}\n\nנתראה בקרוב! 🥂`,
+      text:`שלום {שם}! 🎊\n\nמחכים לך היום ב${eventName}!\n\n🪑 השולחן שלך: מספר {שולחן}\n\n📅 ${eventDate}\n📍 ${event.venue||""}\n\n👇 לפרטים נוספים:\n{קישור}\n\nנתראה בקרוב! 🥂`,
     },
     {
       id:"thanks",
       label:"💙 תודה אחרי האירוע",
-      text:`שלום {שם} היקרה! 💙\n\nתודה רבה שהגעת לחתונה שלנו!\nשמחנו כל כך לחגוג איתך את היום המיוחד הזה 🥰\n\nבאהבה רבה,\n${groomName} ו${brideName} 💍`,
+      text:`שלום {שם}! 💙\n\nתודה רבה שהגעת ל${eventName}!\nשמחנו כל כך לחגוג איתך את היום המיוחד הזה 🥰\n\nבאהבה רבה,\n${coupleRef} ${eventEmoji}`,
     },
   ];
 
@@ -5594,8 +5597,48 @@ function AdminDashboard({ user, onLogout }) {
 }
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
+function PrivacyPage() {
+  return(
+    <div dir="rtl" style={{fontFamily:"'Heebo',sans-serif",background:"#f9f9f9",minHeight:"100vh"}}>
+      <div style={{background:"#fff",borderBottom:"1px solid #eee",padding:"16px 6vw",display:"flex",alignItems:"center",gap:16}}>
+        <a href="#" style={{color:C.blue,textDecoration:"none",fontSize:13,fontWeight:700}}>← חזור לדף הבית</a>
+        <span style={{color:"#ccc"}}>|</span>
+        <span style={{fontWeight:800,color:"#1a1a1a",fontSize:15}}>Sidor-IL</span>
+      </div>
+      <div style={{maxWidth:800,margin:"0 auto",padding:"48px 24px 80px"}}>
+        <h1 style={{fontSize:28,fontWeight:900,color:"#1a1a1a",marginBottom:8}}>מדיניות פרטיות</h1>
+        <p style={{fontSize:13,color:"#888",marginBottom:40}}>עדכון אחרון: ינואר 2025</p>
+
+        {[
+          {title:"1. כללי",text:`Sidor-IL ("החברה", "אנחנו") מפעילה את הפלטפורמה בכתובת sidoril.com ("השירות"). מדיניות פרטיות זו מסבירה כיצד אנו אוספים, משתמשים ומגנים על המידע שלך בעת השימוש בשירות. בשימושך בשירות, אתה מסכים לאיסוף ושימוש במידע בהתאם למדיניות זו.`},
+          {title:"2. מידע שאנו אוספים",text:`אנו אוספים את סוגי המידע הבאים:\n\n• מידע אישי: שם, כתובת אימייל, מספר טלפון בעת ההרשמה.\n• מידע על האירוע: פרטי האירוע, רשימות אורחים, פרטי אורחים שמוזנים על ידך.\n• מידע טכני: כתובת IP, סוג דפדפן, דפים שנצפו, זמני גישה.\n• מידע שימוש: אופן השימוש בתכונות השירות.`},
+          {title:"3. שימוש במידע",text:`אנו משתמשים במידע לצורך:\n\n• מתן השירות וניהול חשבונך.\n• שליחת הודעות SMS ו-WhatsApp לאורחים בשמך, בהתאם להוראותיך.\n• שיפור השירות וחווית המשתמש.\n• משלוח עדכונים חשובים על השירות.\n• עמידה בדרישות חוקיות.`},
+          {title:"4. אחסון ואבטחת מידע",text:`המידע שלך מאוחסן בשרתים מאובטחים של Supabase (AWS). אנו נוקטים באמצעי אבטחה סבירים להגנה על המידע. עם זאת, אין אנו יכולים להבטיח אבטחה מוחלטת של מידע המועבר דרך האינטרנט.`},
+          {title:"5. מידע על אורחים",text:`בעת שימוש בשירות, אתה מעלה פרטי אורחים (שמות, טלפונים). אתה מצהיר כי קיבלת את ההסכמה הנדרשת לשמירת פרטים אלה. אנו לא נשתמש בפרטי האורחים לכל מטרה מלבד מתן השירות לך. פרטי האורחים נמחקים עם מחיקת האירוע.`},
+          {title:"6. שיתוף מידע עם צדדים שלישיים",text:`אנו לא מוכרים או משכירים מידע אישי. אנו עשויים לשתף מידע עם:\n\n• ספקי שירות: Supabase (אחסון), Twilio (WhatsApp), 019 SMS - לצורך מתן השירות בלבד.\n• רשויות: אם מחויבים על פי חוק.\n\nכל הספקים כפופים להסכמי סודיות.`},
+          {title:"7. זכויותיך",text:`בהתאם לחוק הגנת הפרטיות, יש לך זכות:\n\n• לעיין במידע האישי שנשמר עליך.\n• לתקן מידע שגוי.\n• למחוק את חשבונך ואת המידע הקשור אליו.\n• לבטל הסכמה לקבלת הודעות שיווקיות.\n\nלמימוש זכויותיך, צור קשר: support@sidoril.com`},
+          {title:"8. עוגיות (Cookies)",text:`אנו משתמשים בעוגיות חיוניות לפעולת השירות. אין אנו משתמשים בעוגיות מעקב פרסומי. ניתן לחסום עוגיות בהגדרות הדפדפן, אך הדבר עלול לפגוע בפעולת השירות.`},
+          {title:"9. פרטיות קטינים",text:`השירות אינו מיועד לילדים מתחת לגיל 18. אנו לא אוספים ביודעין מידע מקטינים. אם נודע לנו שנאסף מידע מקטין, נמחק אותו מיידית.`},
+          {title:"10. שינויים במדיניות",text:`אנו עשויים לעדכן מדיניות זו מעת לעת. שינויים מהותיים יועברו בהודעה לאימייל הרשום. המשך השימוש בשירות לאחר פרסום השינויים מהווה הסכמה למדיניות המעודכנת.`},
+          {title:"11. יצירת קשר",text:`לכל שאלה בנושא פרטיות:\n\nSidor-IL\nהשושנים 30, נוף הגליל\nטלפון: 052-681-7102\nאימייל: support@sidoril.com\nוואטסאפ: https://wa.me/972526817102`},
+        ].map(({title,text})=>(
+          <div key={title} style={{marginBottom:32}}>
+            <h2 style={{fontSize:17,fontWeight:900,color:"#1a1a1a",marginBottom:10,borderRight:"3px solid "+C.blue,paddingRight:12}}>{title}</h2>
+            <p style={{fontSize:14,color:"#444",lineHeight:1.9,whiteSpace:"pre-line"}}>{text}</p>
+          </div>
+        ))}
+
+        <div style={{background:C.blueXL,border:`1px solid ${C.border}`,borderRadius:14,padding:"16px 20px",marginTop:40,fontSize:13,color:C.blue,fontWeight:700}}>
+          📧 לשאלות: support@sidoril.com | 📞 052-681-7102
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [user,setUser]=useState(null),[event,setEvent]=useState(null),[checking,setChecking]=useState(true),[authMode,setAuthMode]=useState(null),[showLanding,setShowLanding]=useState(false);
+  const [showPrivacy,setShowPrivacy]=useState(window.location.hash==="#/privacy");
 
   const selectEvent=(ev)=>{
     setEvent(ev);
@@ -5672,6 +5715,7 @@ export default function App() {
     </>);
   }
 
+  if(showPrivacy) return <PrivacyPage/>;
   if(!user||showLanding)return(<><style>{`@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;800;900&family=Syne:wght@700;800&display=swap'); *{box-sizing:border-box;margin:0;padding:0} @keyframes spin{to{transform:rotate(360deg)}} @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}} @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}} @keyframes slideInLeft{from{transform:translateX(-100%);opacity:0}to{transform:none;opacity:1}} @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}} @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}} @media(min-width:768px){.nav-link{display:block!important;}} @media(max-width:767px){.hide-mobile{display:none!important;}}`}</style>
     <LandingPage onOpenAuth={mode=>{setShowLanding(false);setAuthMode(mode);}} onLogout={user?logout:null}/>
     {authMode&&<AuthDrawer mode={authMode} onClose={()=>setAuthMode(null)} onAuth={u=>{setUser(u);setAuthMode(null);setShowLanding(false);}}/>}
