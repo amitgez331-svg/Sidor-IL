@@ -4121,7 +4121,13 @@ function SMSScreen({ event, guests }) {
           {(()=>{
             const eventD=event.date?new Date(event.date):null;
             const calcDate=(daysOffset)=>{if(!eventD)return "";const d=new Date(eventD);d.setDate(d.getDate()+daysOffset);return d.toISOString().split("T")[0];};
-            const defs=[{label:"שבוע וחצי לפני",desc:"הזמנה ראשונה",date:calcDate(-11),time:"10:00",icon:"💌"},{label:"4 ימים לפני",desc:"תזכורת",date:calcDate(-4),time:"10:00",icon:"🔔"},{label:"ביום האירוע",desc:"מספר שולחן",date:calcDate(0),time:"09:00",icon:"🎉"},{label:"יומיים אחרי",desc:"הודעת תודה",date:calcDate(2),time:"10:00",icon:"💙"}];
+            const templateMap=["invite","reminder","table","thanks"];
+            const defs=[
+              {label:"שבוע וחצי לפני",desc:"הזמנה ראשונה",date:calcDate(-11),time:"10:00",icon:"💌",templateId:"invite"},
+              {label:"4 ימים לפני",desc:"תזכורת לממתינים",date:calcDate(-4),time:"10:00",icon:"🔔",templateId:"reminder"},
+              {label:"ביום האירוע",desc:"מספר שולחן",date:calcDate(0),time:"09:00",icon:"🎉",templateId:"table"},
+              {label:"יומיים אחרי",desc:"הודעת תודה",date:calcDate(2),time:"10:00",icon:"💙",templateId:"thanks"},
+            ];
             return(
               <div style={{background:"#fff",borderRadius:14,padding:16,marginBottom:12,border:`1px solid ${C.border}`}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:showSmsSchedule?10:0}}>
@@ -4134,14 +4140,24 @@ function SMSScreen({ event, guests }) {
                   {defs.map((s,i)=>{
                     const d=s.date?new Date(s.date+"T00:00:00"):null;
                     const disp=d?d.toLocaleDateString("he-IL",{weekday:"short",day:"numeric",month:"short"}):"לא הוגדר";
+                    const tpl=TEMPLATES.find(t=>t.id===s.templateId);
+                    const preview=tpl?tpl.text.replace("{שם}","[שם האורח]").replace("{קישור}","[קישור]").replace("{שולחן}","[מס' שולחן]").substring(0,80)+"...":"";
                     return(
                       <div key={i} style={{border:`1.5px solid ${C.border}`,borderRadius:10,padding:"9px 12px",background:"#FAFAFA"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
                           <span style={{fontSize:17}}>{s.icon}</span>
                           <div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:C.text}}>{s.label}</div><div style={{fontSize:10,color:C.muted}}>{s.desc}</div></div>
                           {!showSmsSchedule&&<div style={{fontSize:10,color:C.muted,direction:"ltr"}}>{disp} {s.time}</div>}
                         </div>
-                        {showSmsSchedule&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8}}>
+                        {/* תצוגת הטקסט */}
+                        <div style={{background:"#EEF2FF",borderRadius:8,padding:"6px 10px",fontSize:11,color:"#3D5475",lineHeight:1.5,marginBottom:showSmsSchedule?8:0}}>
+                          📝 {preview}
+                          <button onClick={()=>{setSelectedTemplate(s.templateId);setMsgText(tpl?.text||"");}}
+                            style={{display:"inline-block",marginRight:6,background:C.blue,color:"#fff",border:"none",borderRadius:5,padding:"2px 6px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                            ערוך
+                          </button>
+                        </div>
+                        {showSmsSchedule&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:4}}>
                           <div><div style={{fontSize:10,fontWeight:700,color:"#666",marginBottom:3}}>תאריך</div><input type="date" defaultValue={s.date} id={`sms_date_${i}`} style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:8,padding:"7px 8px",fontSize:12,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/></div>
                           <div><div style={{fontSize:10,fontWeight:700,color:"#666",marginBottom:3}}>שעה</div><input type="time" defaultValue={s.time} id={`sms_time_${i}`} style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:8,padding:"7px 8px",fontSize:12,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/></div>
                         </div>}
@@ -4370,6 +4386,11 @@ function WhatsAppScreen({ event, guests }) {
         <div style={{fontSize:13,opacity:.85}}>בחר את סוג השירות שרכשת</div>
       </div>
 
+      <div style={{background:"#FFF8E1",border:"1px solid #FDE68A",borderRadius:12,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#B45309",display:"flex",gap:8,alignItems:"flex-start"}}>
+        <span style={{fontSize:16,flexShrink:0}}>ℹ️</span>
+        <span>מחיר החבילה נקבע לפי <strong>מספר האורחים באירוע</strong> ולא לפי כמות הודעות. בחר את הטווח המתאים לגודל האירוע שלך.</span>
+      </div>
+
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
         <div onClick={()=>setWaPkg("auto")}
           style={{background:"#fff",border:"2px solid #25D366",borderRadius:20,padding:"20px 16px",cursor:"pointer",textAlign:"center",boxShadow:"0 4px 16px rgba(37,211,102,.15)"}}>
@@ -4528,22 +4549,23 @@ function WhatsAppScreen({ event, guests }) {
               };
 
               const defaultSchedules=[
-                {label:"שבוע וחצי לפני",desc:"הזמנה ראשונה",date:calcDate(-11),time:"10:00",icon:"💌"},
-                {label:"4 ימים לפני",desc:"תזכורת",date:calcDate(-4),time:"10:00",icon:"🔔"},
-                {label:"ביום האירוע",desc:"מספר שולחן",date:calcDate(0),time:"09:00",icon:"🎉"},
-                {label:"יומיים אחרי",desc:"הודעת תודה",date:calcDate(2),time:"10:00",icon:"💙"},
+                {label:"שבוע וחצי לפני",desc:"הזמנה ראשונה",date:calcDate(-11),time:"10:00",icon:"💌",templateId:"invite"},
+                {label:"4 ימים לפני",desc:"תזכורת לממתינים",date:calcDate(-4),time:"10:00",icon:"🔔",templateId:"reminder"},
+                {label:"ביום האירוע",desc:"מספר שולחן",date:calcDate(0),time:"09:00",icon:"🎉",templateId:"table"},
+                {label:"יומיים אחרי",desc:"הודעת תודה",date:calcDate(2),time:"10:00",icon:"💙",templateId:"thanks"},
               ];
 
               return(
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
                   {defaultSchedules.map((s,i)=>{
                     const key=`wa_schedule_${i}`;
-                    const saved=scheduledDate===key;
                     const d=s.date?new Date(s.date+"T00:00:00"):null;
                     const displayDate=d?d.toLocaleDateString("he-IL",{weekday:"short",day:"numeric",month:"short"}):"תאריך לא הוגדר";
+                    const tpl=TEMPLATES.find(t=>t.id===s.templateId);
+                    const preview=tpl?tpl.text.replace("{שם}","[שם האורח]").replace("{קישור}","[קישור]").replace("{שולחן}","[מס' שולחן]").substring(0,80)+"...":"";
                     return(
-                      <div key={i} style={{border:`1.5px solid ${showSchedule&&scheduledDate===key?C.blueL:C.border}`,borderRadius:12,padding:"10px 12px",background:scheduledDate===key?C.blueXL:"#FAFAFA"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <div key={i} style={{border:`1.5px solid ${showSchedule?C.border:"#E2E8F0"}`,borderRadius:12,padding:"10px 12px",background:"#FAFAFA"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
                           <div style={{fontSize:20,flexShrink:0}}>{s.icon}</div>
                           <div style={{flex:1}}>
                             <div style={{fontSize:13,fontWeight:800,color:C.text}}>{s.label}</div>
@@ -4554,18 +4576,25 @@ function WhatsAppScreen({ event, guests }) {
                           )}
                         </div>
 
+                        {/* תצוגת טקסט */}
+                        <div style={{background:"#F0FFF4",borderRadius:8,padding:"6px 10px",fontSize:11,color:"#276749",lineHeight:1.5,marginBottom:showSchedule?8:0}}>
+                          📝 {preview}
+                          <button onClick={()=>{setSelectedTemplate(s.templateId);setMsgText(tpl?.text||"");}}
+                            style={{display:"inline-block",marginRight:6,background:"#25D366",color:"#fff",border:"none",borderRadius:5,padding:"2px 6px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                            ערוך
+                          </button>
+                        </div>
+
                         {showSchedule&&(
-                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:10}}>
+                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                             <div>
                               <div style={{fontSize:10,fontWeight:700,color:"#666",marginBottom:3}}>תאריך</div>
-                              <input type="date" defaultValue={s.date}
-                                id={`wa_date_${i}`}
+                              <input type="date" defaultValue={s.date} id={`wa_date_${i}`}
                                 style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:8,padding:"7px 8px",fontSize:12,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
                             </div>
                             <div>
                               <div style={{fontSize:10,fontWeight:700,color:"#666",marginBottom:3}}>שעה</div>
-                              <input type="time" defaultValue={s.time}
-                                id={`wa_time_${i}`}
+                              <input type="time" defaultValue={s.time} id={`wa_time_${i}`}
                                 style={{width:"100%",border:`1.5px solid ${C.border}`,borderRadius:8,padding:"7px 8px",fontSize:12,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
                             </div>
                           </div>
