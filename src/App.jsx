@@ -1368,8 +1368,36 @@ function EventPicker({ user, onSelect, onLogout, onBackToLanding }) {
 }
 
 // ─── BOTTOM NAV ───────────────────────────────────────────────────────────────
-function BottomNav({ active, onChange }) {
-  return(<div style={{position:"fixed",bottom:0,right:0,left:0,zIndex:80,background:C.surface,borderTop:`1px solid ${C.border}`,display:"flex",alignItems:"center",height:64,boxShadow:"0 -4px 20px rgba(27,58,140,0.08)"}}>{[{id:"home",icon:"🏠",label:"ראשי"},{id:"seating",icon:"🪑",label:"הושבה"},{id:"rsvp",icon:"✅",label:"הגעה"},{id:"add",icon:"➕",label:"הוסף"},{id:"settings",icon:"⚙️",label:"הגדרות"}].map(item=>(<button key={item.id} onClick={()=>onChange(item.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,border:"none",background:"none",cursor:"pointer",fontFamily:"inherit",padding:"6px 0",position:"relative"}}><span style={{fontSize:20,lineHeight:1,filter:active===item.id?"none":"grayscale(1)",opacity:active===item.id?1:.5}}>{item.icon}</span><span style={{fontSize:10,fontWeight:700,color:active===item.id?C.blue:C.muted}}>{item.label}</span>{active===item.id&&<div style={{position:"absolute",bottom:0,width:32,height:3,borderRadius:"3px 3px 0 0",background:`linear-gradient(90deg,${C.blueM},${C.blueL})`}}/>}</button>))}</div>);
+function BottomNav({ active, onChange, userPackages=[], totalGuests=0 }) {
+  const hasSeating=userPackages.some(p=>["seating","sms","auto","vip","staff"].includes(p.package_id));
+  const isFreePlan=userPackages.length===0;
+  const items=[
+    {id:"home",icon:"🏠",label:"ראשי"},
+    {id:"seating",icon:"🪑",label:"הושבה",locked:!hasSeating},
+    {id:"rsvp",icon:"✅",label:"הגעה"},
+    {id:"add",icon:"➕",label:"הוסף",locked:isFreePlan&&totalGuests>=50},
+    {id:"settings",icon:"⚙️",label:"הגדרות"},
+  ];
+  return(
+    <div style={{position:"fixed",bottom:0,right:0,left:0,zIndex:80,background:C.surface,borderTop:`1px solid ${C.border}`,display:"flex",alignItems:"center",height:64,boxShadow:"0 -4px 20px rgba(27,58,140,0.08)"}}>
+      {items.map(item=>(
+        <button key={item.id} onClick={()=>{
+          if(item.locked){
+            if(item.id==="seating") alert("🔒 סידורי הושבה זמינים בחבילה המתקדמת ומעלה (₪150)");
+            else if(item.id==="add") alert("🔒 הגעת למגבלת 50 אורחים בחבילה החינמית. שדרג כדי להוסיף עוד.");
+            return;
+          }
+          onChange(item.id);
+        }}
+          style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,border:"none",background:"none",cursor:"pointer",fontFamily:"inherit",padding:"6px 0",position:"relative",opacity:item.locked?.5:1}}>
+          <span style={{fontSize:20,lineHeight:1,filter:active===item.id?"none":"grayscale(1)",opacity:active===item.id?1:.5}}>{item.icon}</span>
+          <span style={{fontSize:10,fontWeight:700,color:active===item.id?C.blue:C.muted}}>{item.label}</span>
+          {item.locked&&<span style={{position:"absolute",top:4,left:"50%",transform:"translateX(-50%)",fontSize:8,background:"#FEF3C7",color:"#B45309",borderRadius:4,padding:"1px 4px",fontWeight:800}}>🔒</span>}
+          {active===item.id&&<div style={{position:"absolute",bottom:0,width:32,height:3,borderRadius:"3px 3px 0 0",background:`linear-gradient(90deg,${C.blueM},${C.blueL})`}}/>}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 // ─── EDIT TABLE MODAL ─────────────────────────────────────────────────────────
@@ -2032,7 +2060,17 @@ function SeatingApp({ user, event, onBack }) {
             </button>
           </div>
         )}
-        {modal==="addGuest"&&<GuestModal eventId={event.id} onClose={()=>setModal(null)} existingGuests={[...guests,...tables.flatMap(t=>t.guests||[])]} onSave={async(data)=>{await addGuest(data);setModal(null);}}/>}
+        {modal==="addGuest"&&(userPackages.length===0&&total>=50
+          ?<div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setModal(null)}>
+            <div style={{background:"#fff",borderRadius:20,padding:24,maxWidth:360,width:"100%",direction:"rtl",textAlign:"center"}}>
+              <div style={{fontSize:48,marginBottom:12}}>🔒</div>
+              <div style={{fontSize:17,fontWeight:900,color:"#1a1a1a",marginBottom:8}}>הגעת למגבלת 50 אורחים</div>
+              <div style={{fontSize:13,color:"#666",marginBottom:20,lineHeight:1.6}}>בחבילה החינמית ניתן להוסיף עד 50 אורחים. שדרג לחבילה הבסיסית (₪50) כדי להוסיף ללא הגבלה.</div>
+              <button onClick={()=>{setModal(null);setScreen("packages");}} style={{width:"100%",background:"linear-gradient(135deg,#1B3A8C,#2952C8)",color:"#fff",border:"none",borderRadius:12,padding:"13px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>📦 שדרג חבילה</button>
+            </div>
+          </div>
+          :<GuestModal eventId={event.id} onClose={()=>setModal(null)} existingGuests={[...guests,...tables.flatMap(t=>t.guests||[])]} onSave={async(data)=>{await addGuest(data);setModal(null);}}/>
+        )}
         {screen==="rsvp"&&<MobileRsvpScreen guests={guests} tables={tables} event={event} sb={sb} setGuests={setGuests} setTables={setTables} setModal={setModal}/>}
         {screen==="import"&&(
           <div style={{padding:20,direction:"rtl",fontFamily:"'Heebo',sans-serif"}}>
@@ -2116,7 +2154,7 @@ function SeatingApp({ user, event, onBack }) {
         {screen==="user_settings"&&<MobileSettingsScreen user={user} event={event} sb={sb} setGuests={setGuests} setScreen={setScreen}/>}
         {screen==="settings_event"&&<EventDetailsScreen event={event} sb={sb} user={user} onLogout={async()=>{await sb.auth.signOut();}} onUpdate={async(data)=>{await sb.from("events").update(data).eq("id",event.id);Object.assign(event,data);}}/>}
       </div>
-      <BottomNav active={screen} onChange={setScreen}/>
+      <BottomNav active={screen} onChange={setScreen} userPackages={userPackages} totalGuests={total}/>
       {modal==="receipt"&&<ReceiptModal tables={tables} onClose={()=>setModal(null)}/>}
       {modal==="addTable"&&<AddTableModal onConfirm={doAddTable} onClose={()=>setModal(null)}/>}
     </div>);
@@ -5866,10 +5904,17 @@ function PrivacyPage() {
 export default function App() {
   const [user,setUser]=useState(null),[event,setEvent]=useState(null),[checking,setChecking]=useState(true),[authMode,setAuthMode]=useState(null),[showLanding,setShowLanding]=useState(false);
   const [showPrivacy,setShowPrivacy]=useState(window.location.hash==="#/privacy");
+  const [showResetPw,setShowResetPw]=useState(false);
+  const [resetPw,setResetPw]=useState({newP:"",confirm:"",msg:null,loading:false});
 
   useEffect(()=>{
     const onHash=()=>setShowPrivacy(window.location.hash==="#/privacy");
     window.addEventListener("hashchange",onHash);
+    // זיהוי קישור שחזור סיסמה
+    const hash=window.location.hash;
+    if(hash.includes("type=recovery")||hash.includes("access_token")){
+      setShowResetPw(true);
+    }
     return()=>window.removeEventListener("hashchange",onHash);
   },[]);
 
@@ -5949,7 +5994,44 @@ export default function App() {
   }
 
   if(showPrivacy) return <PrivacyPage/>;
-  if(!user||showLanding)return(<><style>{`@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;800;900&family=Syne:wght@700;800&display=swap'); *{box-sizing:border-box;margin:0;padding:0} @keyframes spin{to{transform:rotate(360deg)}} @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}} @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}} @keyframes slideInLeft{from{transform:translateX(-100%);opacity:0}to{transform:none;opacity:1}} @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}} @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}} @media(min-width:768px){.nav-link{display:block!important;}} @media(max-width:767px){.hide-mobile{display:none!important;}}`}</style>
+
+  // דף איפוס סיסמה
+  if(showResetPw) return(
+    <div dir="rtl" style={{minHeight:"100vh",background:"#F0F4FF",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Heebo',sans-serif",padding:20}}>
+      <div style={{background:"#fff",borderRadius:20,padding:32,width:"100%",maxWidth:400,boxShadow:"0 8px 32px rgba(27,58,140,.12)"}}>
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <div style={{fontSize:40,marginBottom:8}}>🔑</div>
+          <div style={{fontSize:20,fontWeight:900,color:"#1a1a1a"}}>הגדרת סיסמה חדשה</div>
+          <div style={{fontSize:13,color:"#888",marginTop:4}}>הזן את הסיסמה החדשה שלך</div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <input type="password" placeholder="סיסמה חדשה" value={resetPw.newP}
+            onChange={e=>setResetPw(r=>({...r,newP:e.target.value}))}
+            style={{border:"1.5px solid #E2E8F0",borderRadius:12,padding:"12px 16px",fontSize:14,fontFamily:"inherit",outline:"none"}}/>
+          <input type="password" placeholder="אימות סיסמה חדשה" value={resetPw.confirm}
+            onChange={e=>setResetPw(r=>({...r,confirm:e.target.value}))}
+            style={{border:"1.5px solid #E2E8F0",borderRadius:12,padding:"12px 16px",fontSize:14,fontFamily:"inherit",outline:"none"}}/>
+          {resetPw.msg&&<div style={{fontSize:13,fontWeight:700,color:resetPw.msg.err?"#C53030":"#276749",textAlign:"center"}}>{resetPw.msg.txt}</div>}
+          <button onClick={async()=>{
+            if(resetPw.newP!==resetPw.confirm){setResetPw(r=>({...r,msg:{err:true,txt:"הסיסמאות לא תואמות"}}));return;}
+            if(resetPw.newP.length<6){setResetPw(r=>({...r,msg:{err:true,txt:"סיסמה חייבת להכיל לפחות 6 תווים"}}));return;}
+            setResetPw(r=>({...r,loading:true,msg:null}));
+            const{error}=await sb.auth.updateUser({password:resetPw.newP});
+            if(error){setResetPw(r=>({...r,loading:false,msg:{err:true,txt:error.message}}));}
+            else{
+              setResetPw(r=>({...r,loading:false,msg:{err:false,txt:"✅ הסיסמה עודכנה בהצלחה!"}}));
+              setTimeout(()=>{setShowResetPw(false);window.location.hash="";},2000);
+            }
+          }} disabled={resetPw.loading}
+            style={{background:"linear-gradient(135deg,#1B3A8C,#2952C8)",color:"#fff",border:"none",borderRadius:12,padding:"14px",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>
+            {resetPw.loading?"מעדכן...":"עדכן סיסמה"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if(!user||showLanding) return(<><style>{`@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;800;900&family=Syne:wght@700;800&display=swap'); *{box-sizing:border-box;margin:0;padding:0} @keyframes spin{to{transform:rotate(360deg)}} @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}} @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}} @keyframes slideInLeft{from{transform:translateX(-100%);opacity:0}to{transform:none;opacity:1}} @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}} @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}} @media(min-width:768px){.nav-link{display:block!important;}} @media(max-width:767px){.hide-mobile{display:none!important;}}`}</style>
     <LandingPage onOpenAuth={mode=>{setShowLanding(false);setAuthMode(mode);}} onLogout={user?logout:null}/>
     {authMode&&<AuthDrawer mode={authMode} onClose={()=>setAuthMode(null)} onAuth={u=>{setUser(u);setAuthMode(null);setShowLanding(false);}}/>}
     <AccessibilityWidget/>
