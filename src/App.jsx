@@ -1368,13 +1368,13 @@ function EventPicker({ user, onSelect, onLogout, onBackToLanding }) {
 }
 
 // ─── BOTTOM NAV ───────────────────────────────────────────────────────────────
-function BottomNav({ active, onChange, userPackages=[], totalGuests=0 }) {
+function BottomNav({ active, onChange, userPackages=[], totalGuests=0, trialExpired=false }) {
   const hasSeating=userPackages.some(p=>["seating","sms","auto","vip","staff"].includes(p.package_id));
   const isFreePlan=userPackages.length===0;
   const items=[
     {id:"home",icon:"🏠",label:"ראשי"},
     {id:"seating",icon:"🪑",label:"הושבה",locked:!hasSeating},
-    {id:"rsvp",icon:"✅",label:"הגעה"},
+    {id:"rsvp",icon:"✅",label:"הגעה",locked:isFreePlan&&trialExpired},
     {id:"add",icon:"➕",label:"הוסף",locked:isFreePlan&&totalGuests>=50},
     {id:"settings",icon:"⚙️",label:"הגדרות"},
   ];
@@ -1996,7 +1996,7 @@ function SeatingApp({ user, event, onBack }) {
               {icon:"📦",label:"חבילות",nav:"packages",color:"#B45309",bg:"#FFFBEB"},
               {icon:"⚙️",label:"הגדרות",nav:"user_settings",color:"#555",bg:"#F7F7F7"},
             ].map(item=>{
-              const isLocked=item.nav!=="packages"&&item.nav!=="settings"&&item.nav!=="rsvp"&&item.nav!=="invite"&&item.nav!=="user_settings"&&trialExpired&&userPackages.length===0;
+              const isLocked=item.nav!=="packages"&&item.nav!=="settings"&&item.nav!=="invite"&&item.nav!=="user_settings"&&trialExpired&&userPackages.length===0;
               return(
                 <div key={item.nav} onClick={()=>{
                     if(isLocked){setScreen("packages");return;}
@@ -2154,7 +2154,7 @@ function SeatingApp({ user, event, onBack }) {
         {screen==="user_settings"&&<MobileSettingsScreen user={user} event={event} sb={sb} setGuests={setGuests} setScreen={setScreen}/>}
         {screen==="settings_event"&&<EventDetailsScreen event={event} sb={sb} user={user} onLogout={async()=>{await sb.auth.signOut();}} onUpdate={async(data)=>{await sb.from("events").update(data).eq("id",event.id);Object.assign(event,data);}}/>}
       </div>
-      <BottomNav active={screen} onChange={setScreen} userPackages={userPackages} totalGuests={total}/>
+      <BottomNav active={screen} onChange={setScreen} userPackages={userPackages} totalGuests={total} trialExpired={trialExpired}/>
       {modal==="receipt"&&<ReceiptModal tables={tables} onClose={()=>setModal(null)}/>}
       {modal==="addTable"&&<AddTableModal onConfirm={doAddTable} onClose={()=>setModal(null)}/>}
     </div>);
@@ -2209,7 +2209,7 @@ function SeatingApp({ user, event, onBack }) {
           </div>
           <nav style={{flex:1,padding:"8px 0"}}>
             {navItems.map(item=>{
-              const isLocked=!["home","packages","settings","settings_event","user_settings","rsvp","invite"].includes(item.id)&&trialExpired&&userPackages.length===0;
+              const isLocked=!["home","packages","settings","settings_event","user_settings","invite"].includes(item.id)&&trialExpired&&userPackages.length===0;
               return(
                 <div key={item.id}
                   onClick={()=>{
@@ -2693,8 +2693,7 @@ function SeatingApp({ user, event, onBack }) {
         {screen==="invite"&&<InviteSettings event={event} onUpdate={()=>setScreen("home")}/>}
         {screen==="add"&&<div style={{direction:"rtl"}}><button onClick={()=>setModal("addGuest")} style={{width:"100%",background:`linear-gradient(135deg,${C.blueM},${C.blueL})`,color:"#fff",border:"none",borderRadius:14,padding:"14px",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginBottom:16}}>➕ הוסף אורח חדש</button>{guests.slice(-10).reverse().map(g=>(<Card key={g.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",marginBottom:8}}><div style={{width:32,height:32,borderRadius:"50%",background:`linear-gradient(135deg,${C.blueM},${C.blueL})`,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800}}>{g.name[0]}</div><div style={{flex:1}}><div style={{fontSize:14,fontWeight:600}}>{g.name}</div>{g.phone&&<div style={{fontSize:11,color:C.muted}}>{g.phone}</div>}</div><RsvpBadge rsvp={g.rsvp}/></Card>))}</div>}
         {screen==="settings"&&<EventDetailsScreen event={event} sb={sb} user={user} onLogout={async()=>{await sb.auth.signOut();}} onUpdate={async(data)=>{await sb.from("events").update(data).eq("id",event.id);Object.assign(event,data);}}/>}
-
-        {/* טבלת אישורי הגעה  -  diginet style */}
+        {screen==="user_settings"&&<MobileSettingsScreen user={user} event={event} sb={sb} setGuests={setGuests} setScreen={setScreen}/>}
         {screen==="rsvp"&&<DesktopRsvpTable guests={guests} tables={tables} event={event} sb={sb} loadAll={loadAll} setGuests={setGuests} setTables={setTables} onAddGuest={()=>setModal("addGuest")}/>}
         {screen==="import"&&<div style={{direction:"rtl"}}>
           {/* ייבוא מ-Excel */}
@@ -3820,7 +3819,7 @@ function PackagesScreen({ event, onBack }) {
       id:"free", name:"חינם", price:0, priceLabel:"₪0", color:"#64748B", icon:"🎁",
       badge:null, featured:false,
       desc:"התחל בחינם, שתף ידנית",
-      features:["✅ הזמנה דיגיטלית יפה","✅ שיתוף ידני בוואטסאפ","✅ עד 50 אורחים","❌ אישורי הגעה אוטומטיים","❌ שליחת SMS","❌ WhatsApp אוטומטי","❌ סידורי הושבה"],
+      features:["✅ הזמנה דיגיטלית יפה","✅ שיתוף ידני בוואטסאפ","❌ אישורי הגעה אוטומטיים","❌ שליחת SMS","❌ WhatsApp אוטומטי","❌ סידורי הושבה"],
     },
     {
       id:"basic", name:"בסיסית", price:50, priceLabel:"₪50", color:"#3182CE", icon:"💌",
