@@ -5886,9 +5886,9 @@ export default function App() {
   useEffect(()=>{
     const onHash=()=>setShowPrivacy(window.location.hash==="#/privacy");
     window.addEventListener("hashchange",onHash);
-    // זיהוי קישור שחזור סיסמה
+    // זיהוי קישור שחזור סיסמה בלבד (לא כניסה עם גוגל)
     const hash=window.location.hash;
-    if(hash.includes("type=recovery")||hash.includes("access_token")){
+    if(hash.includes("type=recovery")){
       setShowResetPw(true);
     }
     return()=>window.removeEventListener("hashchange",onHash);
